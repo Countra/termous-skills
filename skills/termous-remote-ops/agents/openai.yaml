@@ -1,0 +1,4 @@
+interface:
+  display_name: "Termous Remote Ops"
+  short_description: "Safely manage Termous SSH sessions and approved commands"
+  default_prompt: "Use $termous-remote-ops to inspect saved hosts, manage SSH sessions, and run an approved remote command."
