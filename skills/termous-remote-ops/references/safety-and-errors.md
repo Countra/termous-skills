@@ -32,7 +32,7 @@
 
 - Unauthorized or foreign task IDs may appear as not found to prevent enumeration.
 - Scope errors require the user to update the MCP client in Termous and reconnect the MCP client; do not request a broader token in chat.
-- A revoked token must not be retried automatically.
+- A token invalidated by client deletion or token rotation must not be retried automatically.
 - For a stale dynamic endpoint, ask the user to copy a fresh configuration from Termous MCP settings.
 - For Host Key waiting, ask the user to inspect the fingerprint in Termous. Never recommend automatic trust.
 - For a busy command manager, do not loop. Explain that Termous permits one active command task and ask the user to wait or interrupt it.
