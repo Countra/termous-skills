@@ -1,0 +1,4 @@
+interface:
+  display_name: "Termous SFTP"
+  short_description: "Manage Termous SFTP files and approved transfers"
+  default_prompt: "Use $termous-sftp to browse remote files and perform an approved SFTP transfer."
