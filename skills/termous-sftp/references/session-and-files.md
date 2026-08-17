@@ -11,12 +11,13 @@
    - connecting or a pre-ready phase: wait and poll;
    - waiting for Host Key trust: ask the user to decide in Termous;
    - failed or disconnected: report the stable error and stop or ask before reconnecting.
-6. If a connect result is immediately lost, retry the identical payload with the same request ID. This is a bounded in-memory recovery mechanism, not a persistent idempotency key; after a longer interruption, call `sessions.list` before creating another session.
+6. If a connect result is immediately lost, retry the identical payload with the same request ID. This is a bounded in-memory recovery mechanism, not a persistent idempotency key; after a longer interruption, call `termous.sftp.sessions.list` before creating another session.
 
 ## Reconnect or close a file session
 
 - Keep polling a connecting or pre-ready session. Use `termous.sftp.sessions.reconnect` only for an existing MCP-owned session in failed or disconnected state; a reconnect that actually starts a new connection generation changes `connection_generation`, so refresh the session before any later operation.
 - Use `termous.sftp.sessions.close` only when the user requests it or when a workflow explicitly requires cleanup. Re-list or get the session to verify the result.
+- Termous Desktop displays MCP-created file sessions as MCP-managed resources and may operate or close them. If a previously visible session becomes not found, re-list current sessions and report that it no longer exists; do not automatically recreate it.
 - Never substitute `termous.sessions.*` SSH tools. Interactive terminal sessions and SFTP file sessions have separate identities and lifecycles.
 
 ## Browse and inspect files

@@ -23,7 +23,7 @@ For session and file call sequences, read [references/session-and-files.md](refe
 
 ## Non-negotiable boundaries
 
-- Manage only SFTP file sessions and transfer tasks visible to the current MCP client. Do not use interactive SSH session IDs as SFTP file session IDs.
+- Manage only SFTP file sessions and transfer tasks visible to the current MCP client. Termous Desktop is a trusted management surface and may display, operate, or close these sessions without making them visible to another MCP client. Do not use interactive SSH session IDs as SFTP file session IDs.
 - Never request, print, store, or infer passwords, private keys, bearer tokens, proxy credentials, or Host Key secrets.
 - Never approve or replace a Host Key through MCP. Ask the user to resolve the native prompt in Termous.
 - Never bypass native approval for `save_text`, `mkdir`, `rename`, `chmod`, upload, download, or remote copy.

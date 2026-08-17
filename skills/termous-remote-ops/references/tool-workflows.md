@@ -13,14 +13,15 @@
 1. Call `termous.sessions.list` and match by exact `host_id`.
 2. Reuse a session only when `status` is `connected` and `phase` is `ready`, unless the user requested a new one.
 3. To create one, generate one stable `client_request_id` for the logical attempt and call `termous.sessions.connect`.
-4. Poll `termous.sessions.get` with the returned `session_id`.
+4. Use the returned `session.id` as `session_id` and poll `termous.sessions.get`.
 5. Handle states explicitly:
    - `status=connected` and `phase=ready`: continue;
    - `status=connecting` or a pre-ready phase: wait and poll;
    - `status=waiting_host_trust` or `host_key_confirmation_required=true`: ask the user to act in Termous;
    - `status=failed` or `status=disconnected`: report the stable error and stop or ask before retrying.
-6. Reuse the same `client_request_id` if the connect response was lost.
-7. If `termous.sessions.get` is unavailable, do not claim that the returned session became ready. Ask the user to grant `sessions:read` or inspect the session in Termous.
+6. If the connect response is immediately lost, retry the identical payload with the same caller-generated `client_request_id`. Generate one ID per logical attempt; keep it valid UTF-8, non-empty, and no longer than 128 bytes.
+7. Treat connect idempotency as a bounded in-memory recovery window, not a persistent key. After a longer interruption or Core restart, call `termous.sessions.list` before deciding whether to create another session.
+8. If `termous.sessions.get` is unavailable, do not claim that the returned session became ready. Ask the user to grant `sessions:read` or inspect the session in Termous.
 
 ## Dispatch an approved command
 
