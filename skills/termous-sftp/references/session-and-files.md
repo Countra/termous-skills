@@ -45,7 +45,7 @@ Before calling `termous.sftp.files.save_text`, `termous.sftp.files.mkdir`, `term
 3. For `save_text`, preserve the exact user-approved content and pass the latest concurrency metadata. Do not use a force option to overwrite an unseen remote change.
 4. For `chmod`, preserve the explicit octal mode requested by the user. Do not infer broader permissions.
 5. Generate one stable `client_request_id` for the logical operation and call the tool once.
-6. Wait for native Termous approval. Rejection, expiry, or cancellation means no write was authorized.
+6. Termous requests native approval unless the client is explicitly configured to skip approvals. Rejection, expiry, or cancellation means no write was authorized; do not infer bypass from success alone.
 7. On success, `stat` or read the result only when verification is useful and the corresponding read scope is available.
 
 Never reinterpret a rename as deletion, recursive move, or same-host copy. Use only the operation exposed by the current MCP tool schema.

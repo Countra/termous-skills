@@ -1,6 +1,6 @@
 ---
 name: termous-sftp
-description: Use Termous MCP to create isolated SFTP file sessions, browse and inspect remote files, read or save small UTF-8 text files, create directories, rename files, change permissions, upload local files, download remote files, copy files between remote hosts, and inspect or cancel owned transfer tasks. Trigger for Termous SFTP browsing, remote file maintenance, native-approved file writes, local upload/download, cross-host transfer, or transfer progress and failure handling.
+description: Use Termous MCP to create isolated SFTP file sessions, browse and inspect remote files, read or save small UTF-8 text files, create directories, rename files, change permissions, upload local files, download remote files, copy files between remote hosts, and inspect or cancel owned transfer tasks. Trigger for Termous SFTP browsing, remote file maintenance, approval-controlled file writes, local upload/download, cross-host transfer, or transfer progress and failure handling.
 ---
 
 # Termous SFTP
@@ -15,7 +15,7 @@ Use the Termous MCP server as the only interface to saved hosts, SFTP file sessi
 4. Poll `termous.sftp.sessions.get` until the selected session is connected and ready. If Host Key trust is required, ask the user to act in Termous.
 5. Preserve the returned `session.id` and `connection_generation`. For single-session file operations and upload/download, pass them as `file_session_id` and `expected_connection_generation`. For remote copy, use the source/target session and generation fields defined by that tool; never guess or reuse a stale generation.
 6. Use `list`, `stat`, and `read_text` for read-only work. Before a file write, state the affected path and content or mode summary. Before a transfer, state the complete source, destination, and overwrite policy.
-7. Call the requested write or transfer tool once with a stable `client_request_id`. Wait for the native Termous approval; rejection or expiry means the operation did not start.
+7. Call the requested write or transfer tool once with a stable `client_request_id`. Termous requests native approval unless the client is explicitly configured to skip approvals. A rejected, expired, or cancelled approval means the operation did not start; never infer the configured policy from a successful result.
 8. For transfers, retain the returned `transfer.id` and, when `termous.sftp.transfers.get` is available, pass it as `transfer_id` until a final state. Report skipped items, partial results, the failure side, and progress honestly.
 9. Call `termous.sftp.transfers.cancel` only when the user explicitly asks to cancel. Treat acceptance as a cancellation request. Continue polling only when `termous.sftp.transfers.get` is available; otherwise report that final-state inspection requires `sftp:transfer`.
 
@@ -26,7 +26,7 @@ For session and file call sequences, read [references/session-and-files.md](refe
 - Manage only SFTP file sessions and transfer tasks visible to the current MCP client. Termous Desktop is a trusted management surface and may display, operate, or close these sessions without making them visible to another MCP client. Do not use interactive SSH session IDs as SFTP file session IDs.
 - Never request, print, store, or infer passwords, private keys, bearer tokens, proxy credentials, or Host Key secrets.
 - Never approve or replace a Host Key through MCP. Ask the user to resolve the native prompt in Termous.
-- Never bypass native approval for `save_text`, `mkdir`, `rename`, `chmod`, upload, download, or remote copy.
+- Never change or conceal the configured approval policy. Approval bypass is a per-client Termous authorization setting, not permission to exceed granted scopes or skip Host Key confirmation.
 - Treat a local path as a path on the machine running Termous Core, not necessarily the machine running the MCP client.
 - Do not expose local file content through another tool, download to an unapproved directory, or upload a path the user did not request.
 - Do not retry an ambiguous write or transfer with a new `client_request_id`. For an immediately lost response, reuse the original ID and payload within Termous's bounded in-memory recovery window. After a longer interruption, query current sessions or tasks before deciding whether a new request is appropriate.
