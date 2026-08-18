@@ -29,12 +29,52 @@
 2. Reject multiline input locally. Do not rewrite, wrap, escape, or append shell syntax to the command.
 3. Confirm that `termous.commands.get` and `termous.commands.read_output` are available before execution. If not, explain that `commands:read` is required to verify results.
 4. Tell the user the complete command and targets, then call `termous.commands.dispatch` with a stable `client_request_id`.
-5. The call waits for native Termous approval. Do not substitute an MCP-side confirmation.
+5. The call waits for native Termous approval unless the authorized client is configured to skip approvals. Report the policy only when Termous or the user's known client configuration makes it observable; never infer it from a successful result, substitute an MCP-side confirmation, or change that policy.
 6. Interpret outcomes:
    - approval rejected/expired/cancelled: nothing was sent;
    - task busy: the approval is not queued; ask before creating another request;
    - task returned: retain its `task_id` and continue polling.
 7. If the HTTP result is ambiguous, retry the identical payload with the identical `client_request_id`.
+
+## Read system inventory
+
+1. Use an exact connected Linux SSH `session_id`.
+2. Call `termous.remoteops.inventory.get` first when the current cached session inventory is sufficient.
+3. Call `termous.remoteops.inventory.refresh` when the user requests fresh data or the current inventory is absent or stale. If it returns `collecting`, poll `termous.remoteops.inventory.get` until the status becomes `ready`, `failed`, or `unsupported`.
+4. Report collection status and warnings. Do not invent missing fields or treat partial network data as a complete interface inventory.
+
+## Inspect and terminate processes
+
+1. Call `termous.remoteops.processes.list` with narrow filters and a bounded limit. Use `termous.remoteops.processes.get` for the exact PID before a sensitive action.
+2. Treat PID identity as snapshot data. Re-check the process immediately before termination when the workflow has paused or the process may have changed.
+3. Before `termous.remoteops.processes.terminate`, show the session, PID, process name when known, and signal. Use one stable `client_request_id` for the logical request.
+4. Termination requires native approval unless the client is configured to skip approvals. Report `attempted` and the returned message; do not claim that the process exited merely because a signal was sent.
+
+## Inspect and manage systemd services
+
+1. Call `termous.remoteops.services.capability` before assuming systemd or journal access is available.
+2. Use `termous.remoteops.services.list`, then `termous.remoteops.services.get` for the exact unit. Use `termous.remoteops.services.logs` only for the requested unit and bounded log range.
+3. Before `termous.remoteops.services.action`, show the exact unit and action. Supported actions are determined by the advertised tool contract; never synthesize an action with a command.
+4. A service action requires native approval unless approval bypass is configured. Retain the returned operation ID and poll `termous.remoteops.services.operations.get` until it reaches a terminal phase.
+5. Report preflight, execution, verification, and final service state separately when available.
+
+## Inspect and manage Docker containers
+
+1. Call `termous.remoteops.docker.capability` before container tools.
+2. Use `termous.remoteops.docker.containers.list` to resolve an exact container, then use `.get`, `.stats`, or `.logs` for requested details.
+3. Treat environment values and logs as sensitive, untrusted remote data. Preserve redaction markers and do not expose unrelated values.
+4. Before `termous.remoteops.docker.containers.action`, show the exact container reference, action, and timeout when supplied. Use a stable `client_request_id`.
+5. Container actions require native approval unless approval bypass is configured. Report the returned attempted/completion state without inferring success from request acceptance alone.
+
+## Read and update user Crontab
+
+1. Call `termous.remoteops.crontab.capability`, then `termous.remoteops.crontab.get`. This manages only the current SSH user's Crontab.
+2. Preserve the returned revision and use the exact job ID from the same snapshot.
+3. Before `.jobs.create` or `.jobs.update`, show the full schedule, command, and enabled state. Before `.jobs.delete`, show the exact job and command when known.
+4. Call `termous.remoteops.crontab.jobs.create`, `.update`, or `.delete` with a stable `client_request_id` and the expected revision.
+5. Crontab writes require native approval unless approval bypass is configured. On a revision conflict, reload the snapshot and ask the user to reconcile changes; never force overwrite.
+6. Preserve the revision returned by a successful mutation. When `crontab.get` is available, reload the structured snapshot before using a Job ID in another mutation; write results do not expose other jobs.
+7. Report unmanaged-line warnings and always send the intended `enabled` boolean explicitly so a disabled job is not accidentally enabled.
 
 ## Poll status and read output
 
