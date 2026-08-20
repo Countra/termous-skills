@@ -1,0 +1,4 @@
+interface:
+  display_name: "Termous Port Forwarding"
+  short_description: "Manage approved Termous SSH port forwards"
+  default_prompt: "Use $termous-port-forwarding to inspect a Termous forward and safely start or stop the exact SSH tunnel I request."

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Termous Crontab"
+  short_description: "Manage structured user Crontab jobs through Termous"
+  default_prompt: "Use $termous-crontab to inspect and safely update a user's structured Crontab jobs."

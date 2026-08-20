@@ -9,7 +9,8 @@
    - `rename`: preserve existing items by selecting a new target name;
    - `skip`: leave existing targets unchanged and report skipped items;
    - `overwrite`: replace compatible existing files according to Termous transfer semantics.
-5. State the complete transfer direction, paths, target, and overwrite policy. Generate one stable `client_request_id` for that logical transfer.
+5. Keep each transfer to 1 through 32 explicitly selected top-level source paths. Do not split a larger request into multiple transfers without a new user decision for each transfer.
+6. State the complete transfer direction, paths, target, and overwrite policy. Generate one stable `client_request_id` for that logical transfer.
 
 ## Upload local files
 
@@ -44,9 +45,10 @@ Use `termous.sftp.transfers.remote_copy` to stream files through Termous Core fr
 ## Poll and report a task
 
 1. Retain the returned `transfer.id` and pass it as `transfer_id` to `termous.sftp.transfers.get` using the same MCP client.
-2. Poll while status is queued or running. Use `phase`, byte counts, file counts, speed, ETA, and current file only as reported.
-3. Stop when status is completed, failed, or cancelled.
-4. Always report:
+2. The task is also visible in the Termous Desktop transfer list with an MCP origin marker. The user may cancel or remove it there; another MCP client still cannot inspect or control it.
+3. Poll while status is queued or running. Use `phase`, byte counts, file counts, speed, ETA, and current file only as reported.
+4. Stop when status is completed, failed, or cancelled. If the owning MCP client receives not found after the task was visible, it may have been removed in Desktop; do not recreate it automatically.
+5. Always report:
    - transfer type and source-to-target identity;
    - final status and stable error when present;
    - transferred and total bytes/files when known;

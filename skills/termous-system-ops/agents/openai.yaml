@@ -1,0 +1,4 @@
+interface:
+  display_name: "Termous System Ops"
+  short_description: "Inspect Linux processes, services, and containers"
+  default_prompt: "Use $termous-system-ops to inspect a connected Linux host and safely manage a process, systemd service, or Docker container."

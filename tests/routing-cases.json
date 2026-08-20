@@ -1,0 +1,135 @@
+{
+  "schema_version": 1,
+  "cases": [
+    {
+      "kind": "direct",
+      "prompt": "Connect to the saved host named staging and run uname -a, then report the exit code.",
+      "expected_skills": ["termous-remote-ops"]
+    },
+    {
+      "kind": "direct",
+      "prompt": "读取 Termous 中测试2会话的上一条命令输出，保留输出游标。",
+      "expected_skills": ["termous-remote-ops"]
+    },
+    {
+      "kind": "direct",
+      "prompt": "Inspect Docker container resource usage on the connected production SSH session.",
+      "expected_skills": ["termous-system-ops"]
+    },
+    {
+      "kind": "direct",
+      "prompt": "查看测试主机上的 systemd 服务日志，不要执行任意 shell 命令。",
+      "expected_skills": ["termous-system-ops"]
+    },
+    {
+      "kind": "direct",
+      "prompt": "Create a disabled structured Crontab job for the current SSH user after showing the full schedule and command.",
+      "expected_skills": ["termous-crontab"]
+    },
+    {
+      "kind": "direct",
+      "prompt": "检查当前 Termous SSH 会话的 Crontab revision，并删除我指定的任务。",
+      "expected_skills": ["termous-crontab"]
+    },
+    {
+      "kind": "direct",
+      "prompt": "Upload C:\\release\\app.zip from the Termous Core machine to /srv/releases using rename-on-conflict.",
+      "expected_skills": ["termous-sftp"]
+    },
+    {
+      "kind": "direct",
+      "prompt": "通过 Termous SFTP 将一台远端主机的目录复制到另一台主机，并持续报告传输进度。",
+      "expected_skills": ["termous-sftp"]
+    },
+    {
+      "kind": "direct",
+      "prompt": "Start a loopback-only local SSH forward from a connected Termous session, then inspect its traffic counters.",
+      "expected_skills": ["termous-port-forwarding"]
+    },
+    {
+      "kind": "direct",
+      "prompt": "列出 Termous 端口转发配置，并停止我指定的运行实例。",
+      "expected_skills": ["termous-port-forwarding"]
+    },
+    {
+      "kind": "direct",
+      "prompt": "Find the saved deploy command snippet and update its tags without executing it.",
+      "expected_skills": ["termous-snippets"]
+    },
+    {
+      "kind": "cross-domain",
+      "prompt": "读取 Termous 中名为 health-check 的代码片段，确认完整命令后在测试2 SSH 会话执行。",
+      "expected_skills": ["termous-snippets", "termous-remote-ops"]
+    },
+    {
+      "kind": "cross-domain",
+      "prompt": "Inspect a Docker container, then run the exact command docker inspect demo on the same Termous SSH session.",
+      "expected_skills": ["termous-system-ops", "termous-remote-ops"]
+    },
+    {
+      "kind": "cross-domain",
+      "prompt": "创建一个 Termous local forward，并在同一 SSH 会话执行我给出的 curl 命令验证端口。",
+      "expected_skills": ["termous-port-forwarding", "termous-remote-ops"]
+    },
+    {
+      "kind": "cross-domain",
+      "prompt": "Read a saved deployment snippet, upload its referenced package through Termous SFTP, then execute the exact saved command.",
+      "expected_skills": ["termous-snippets", "termous-sftp", "termous-remote-ops"]
+    },
+    {
+      "kind": "direct",
+      "prompt": "The structured Docker tool is unavailable; use Termous to inspect the container without falling back to a shell command.",
+      "expected_skills": ["termous-system-ops"]
+    },
+    {
+      "kind": "ambiguous",
+      "prompt": "在 Termous 的测试2会话里执行我给出的完整命令 systemctl status nginx。",
+      "expected_skills": ["termous-remote-ops"]
+    },
+    {
+      "kind": "ambiguous",
+      "prompt": "查看测试2上的 nginx 服务状态并在需要时重启它，不要执行 shell 命令。",
+      "expected_skills": ["termous-system-ops"]
+    },
+    {
+      "kind": "negative",
+      "prompt": "Write a TypeScript function that sorts an in-memory array.",
+      "expected_skills": []
+    },
+    {
+      "kind": "negative",
+      "prompt": "Open a local terminal and delete every temporary file on this computer.",
+      "expected_skills": []
+    },
+    {
+      "kind": "negative",
+      "prompt": "Download a public release archive over HTTP and upload it to an S3 bucket.",
+      "expected_skills": []
+    },
+    {
+      "kind": "negative",
+      "prompt": "Run ssh -D 1080 user@example.com in my local shell.",
+      "expected_skills": []
+    },
+    {
+      "kind": "negative",
+      "prompt": "Explain the difference between local and remote SSH port forwarding without operating Termous.",
+      "expected_skills": []
+    },
+    {
+      "kind": "negative",
+      "prompt": "Create a Kubernetes CronJob and a systemd timer for this application.",
+      "expected_skills": []
+    },
+    {
+      "kind": "negative",
+      "prompt": "Add a VS Code JavaScript snippet to this repository.",
+      "expected_skills": []
+    },
+    {
+      "kind": "negative",
+      "prompt": "Inspect Docker Desktop containers on this local Windows machine.",
+      "expected_skills": []
+    }
+  ]
+}

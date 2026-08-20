@@ -1,0 +1,4 @@
+interface:
+  display_name: "Termous Snippets"
+  short_description: "Manage saved Termous command snippets"
+  default_prompt: "Use $termous-snippets to find or safely update a saved command snippet."

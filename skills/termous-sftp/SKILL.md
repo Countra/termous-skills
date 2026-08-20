@@ -1,6 +1,6 @@
 ---
 name: termous-sftp
-description: Use Termous MCP to create isolated SFTP file sessions, browse and inspect remote files, read or save small UTF-8 text files, create directories, rename files, change permissions, upload local files, download remote files, copy files between remote hosts, and inspect or cancel owned transfer tasks. Trigger for Termous SFTP browsing, remote file maintenance, approval-controlled file writes, local upload/download, cross-host transfer, or transfer progress and failure handling.
+description: Use Termous MCP SFTP sessions to browse or maintain files on saved SSH hosts, transfer files between the Termous Core machine and a remote host, copy between remote hosts, or inspect and cancel transfer tasks. Trigger only for Termous-managed SFTP work; do not use for local-only files, HTTP/S3 transfers, SCP, or an exact shell command.
 ---
 
 # Termous SFTP
@@ -16,14 +16,14 @@ Use the Termous MCP server as the only interface to saved hosts, SFTP file sessi
 5. Preserve the returned `session.id` and `connection_generation`. For single-session file operations and upload/download, pass them as `file_session_id` and `expected_connection_generation`. For remote copy, use the source/target session and generation fields defined by that tool; never guess or reuse a stale generation.
 6. Use `list`, `stat`, and `read_text` for read-only work. Before a file write, state the affected path and content or mode summary. Before a transfer, state the complete source, destination, and overwrite policy.
 7. Call the requested write or transfer tool once with a stable `client_request_id`. Termous requests native approval unless the client is explicitly configured to skip approvals. A rejected, expired, or cancelled approval means the operation did not start; never infer the configured policy from a successful result.
-8. For transfers, retain the returned `transfer.id` and, when `termous.sftp.transfers.get` is available, pass it as `transfer_id` until a final state. Report skipped items, partial results, the failure side, and progress honestly.
+8. For transfers, retain the returned `transfer.id` and, when `termous.sftp.transfers.get` is available, pass it as `transfer_id` until a final state. Report skipped items, partial results, the failure side, and progress honestly. The same MCP-managed task is visible in Termous Desktop and may be cancelled or removed there by the user.
 9. Call `termous.sftp.transfers.cancel` only when the user explicitly asks to cancel. Treat acceptance as a cancellation request. Continue polling only when `termous.sftp.transfers.get` is available; otherwise report that final-state inspection requires `sftp:transfer`.
 
 For session and file call sequences, read [references/session-and-files.md](references/session-and-files.md). For upload, download, remote copy, and task polling, read [references/transfers.md](references/transfers.md). For approval, path, privacy, and error rules, read [references/safety-and-errors.md](references/safety-and-errors.md).
 
 ## Non-negotiable boundaries
 
-- Manage only SFTP file sessions and transfer tasks visible to the current MCP client. Termous Desktop is a trusted management surface and may display, operate, or close these sessions without making them visible to another MCP client. Do not use interactive SSH session IDs as SFTP file session IDs.
+- Manage only SFTP file sessions and transfer tasks visible to the current MCP client. Termous Desktop is a trusted management surface and may display or close MCP file sessions and display, cancel, or remove MCP transfer tasks without making them visible to another MCP client. Do not use interactive SSH session IDs as SFTP file session IDs.
 - Never request, print, store, or infer passwords, private keys, bearer tokens, proxy credentials, or Host Key secrets.
 - Never approve or replace a Host Key through MCP. Ask the user to resolve the native prompt in Termous.
 - Never change or conceal the configured approval policy. Approval bypass is a per-client Termous authorization setting, not permission to exceed granted scopes or skip Host Key confirmation.
