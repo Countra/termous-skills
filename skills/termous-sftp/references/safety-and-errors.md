@@ -10,7 +10,7 @@
 
 ## Approval policy
 
-- `save_text`, `mkdir`, `rename`, `chmod`, upload, download, and remote copy always pass through the Termous approval gate. By default, each logical request requires native approval; a client explicitly configured for approval bypass executes granted operations without a pending approval.
+- `save_text`, `mkdir`, `rename`, `chmod`, batch-rename start, upload, download, and remote copy always pass through the Termous approval gate. By default, each logical request requires native approval; a client explicitly configured for approval bypass executes granted operations without a pending approval.
 - Approval is bound to the client, `client_request_id`, complete request content, target sessions, and connection generations.
 - Identical retries share the same approval or task within Termous's bounded in-memory recovery window. Reusing an ID with different content during that window is an idempotency conflict.
 - Rejected, expired, or cancelled approval does not authorize a file write or transfer start.
@@ -23,6 +23,7 @@
 - Use absolute POSIX paths for remote files and absolute native paths for local files or directories.
 - Preserve paths exactly after user confirmation. Do not add wildcards, expand environment variables, follow symlinks, or select sibling files.
 - Never use command execution to bypass SFTP size, encoding, entry-type, scope, ownership, or approval checks.
+- Never replace the dedicated batch-rename workflow with a shell command or a loop of single-file renames. Those alternatives lose the authoritative preview, one-plan approval, conflict graph, rollback, and uncertain-result reporting.
 - Keep text operations within the advertised bounded UTF-8 limit. Do not encode binary data into text to evade the limit.
 - Do not print local file content merely because an upload path was authorized. Authorization permits the requested transfer, not unrelated disclosure.
 - Treat `overwrite` as destructive. State it explicitly; never silently upgrade `rename` or `skip` to overwrite.
@@ -32,7 +33,7 @@
 - `completed`: the task reached its successful final state.
 - `failed`: the task stopped on an error; inspect `partial` before describing the outcome.
 - `cancelled`: cancellation reached a final state, but already completed items may remain.
-- `partial=true`: some destination changes may exist; never claim rollback.
+- `partial=true`: some remote changes may exist; report the available per-item state and never infer a complete rollback.
 - `skipped_items > 0`: the task may be successful while intentionally omitting conflicts.
 - `failure_side=source` or `target`: report which side failed without exposing internal details.
 - A stale generation means the file session changed after it was observed. Refresh the session and ask before creating a new logical request.
@@ -46,6 +47,8 @@
 - Approval rejected, expired, or cancelled: report that the operation did not start; do not resubmit automatically.
 - Idempotency conflict: retain the original request ID for the original payload or ask the user before starting a distinct request.
 - Stale file session: refresh status and generation. Never reuse the old approved request against the new connection.
+- Stale batch-rename plan: generate a new preview and ask the user to review the new mappings. Never submit a different plan under the old `client_request_id`.
+- Batch-rename uncertain result: stop all automatic retries, page through the available result, and ask the user to inspect the reported paths in Termous before any follow-up mutation.
 - Unsupported entry: report the symlink or special-file limitation; do not fall back to Shell commands.
 - Target conflict: report the selected policy and conflict. Ask before starting a new request with another policy.
 - Failed, cancelled, or Desktop-removed transfer: report the last observable partial and skipped results. Do not call a generic retry operation; MCP-created transfers are not retryable.
@@ -58,6 +61,7 @@ Always include:
 - operation direction and confirmed paths;
 - overwrite policy for transfer operations;
 - the approval outcome or bypass policy only when it was observable;
-- task ID and final state for transfers;
+- task ID and final state for transfers or batch renames;
+- plan changes, per-item rollback, partial, and uncertain outcomes for batch renames;
 - skipped, partial, failure-side, and cancellation details;
 - any generation, scope, entry-type, size, or encoding limitation.

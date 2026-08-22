@@ -9,7 +9,7 @@ Termous Skills provide focused workflows for the Termous MCP server. They do not
 | `termous-remote-ops` | Saved hosts, SSH sessions, commands, output, and interruption | `hosts:read`, `hosts:probe`, `sessions:read`, `sessions:connect`, `sessions:close`, `commands:execute`, `commands:read`, `commands:interrupt` |
 | `termous-system-ops` | Inventory, processes, systemd, and Docker on a connected Linux session | `system:read`, `processes:read`, `processes:terminate`, `services:read`, `services:manage`, `docker:read`, `docker:manage` |
 | `termous-crontab` | Structured jobs in the current SSH user's Crontab | `crontab:read`, `crontab:write` |
-| `termous-sftp` | SFTP sessions, remote files, and file transfers | `sftp:read`, `sftp:connect`, `sftp:close`, `sftp:write`, `sftp:transfer`, `sftp:cancel` |
+| `termous-sftp` | SFTP sessions, remote files, batch rename, and file transfers | `sftp:read`, `sftp:connect`, `sftp:close`, `sftp:write`, `sftp:transfer`, `sftp:cancel`, `sftp:batch_rename` |
 | `termous-port-forwarding` | Saved and inline local, remote, or dynamic forwarding | `forwarding:read`, `forwarding:manage` |
 | `termous-snippets` | Saved command snippets and groups | `snippets:read`, `snippets:write` |
 

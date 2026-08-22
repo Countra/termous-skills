@@ -27,14 +27,17 @@ PROTOCOL_VERSION_PATTERN = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 MODULE_IMPORT_PATTERN = re.compile(
     r'^\s*(?:(\w+)\s+)?"termous/backend/internal/api/mcp/([^"]+)"\s*$', re.MULTILINE
 )
-REGISTER_CALL_PATTERN = re.compile(r"^\s*(\w+)\.Register\(", re.MULTILINE)
+REGISTER_CALL_PATTERN = re.compile(r"^\s*(\w+)\.(Register\w*)\(", re.MULTILINE)
+TOP_LEVEL_FUNCTION_PATTERN = re.compile(
+    r"^func\s+(?:\([^)]*\)\s*)?(\w+)\s*\(", re.MULTILINE
+)
 ALLOWED_FRONTMATTER = {"name", "description", "license", "allowed-tools", "metadata"}
 ALLOWED_APPROVALS = {"none", "per-call"}
 ROUTING_KINDS = {"direct", "cross-domain", "ambiguous", "negative"}
 EXPECTED_CONTRACT_VERSION = 1
 EXPECTED_SKILL_COUNT = 6
-EXPECTED_TOOL_COUNT = 66
-EXPECTED_SCOPE_COUNT = 27
+EXPECTED_TOOL_COUNT = 73
+EXPECTED_SCOPE_COUNT = 28
 
 
 def read_json(path: Path, errors: list[str]) -> object:
@@ -248,6 +251,15 @@ def validate_routing_cases(skill_names: set[str], errors: list[str]) -> None:
         errors.append(f"tests/routing-cases.json: missing case kinds: {', '.join(missing_kinds)}")
 
 
+def go_function_sections(source: str) -> dict[str, str]:
+    matches = list(TOP_LEVEL_FUNCTION_PATTERN.finditer(source))
+    sections: dict[str, str] = {}
+    for index, match in enumerate(matches):
+        end = matches[index + 1].start() if index + 1 < len(matches) else len(source)
+        sections[match.group(1)] = source[match.start() : end]
+    return sections
+
+
 def validate_backend(backend_root: Path, contract: dict[str, object], tool_names: set[str], errors: list[str]) -> None:
     registry_root = backend_root / "internal" / "api" / "mcp"
     root_registry = registry_root / "registry.go"
@@ -278,30 +290,49 @@ def validate_backend(backend_root: Path, contract: dict[str, object], tool_names
         alias or module_path.rsplit("/", 1)[-1]: module_path
         for alias, module_path in MODULE_IMPORT_PATTERN.findall(root_registry_source)
     }
-    registered_alias_counts = Counter(REGISTER_CALL_PATTERN.findall(root_registry_source))
-    for alias, count in sorted(registered_alias_counts.items()):
+    register_calls = REGISTER_CALL_PATTERN.findall(root_registry_source)
+    registered_entrypoint_counts = Counter(register_calls)
+    for (alias, function_name), count in sorted(registered_entrypoint_counts.items()):
         if count > 1:
-            errors.append(f"Backend MCP module is registered more than once: {alias}")
-    registered_aliases = set(registered_alias_counts)
-    registered_modules = {
-        module_path for alias, module_path in imported_modules.items() if alias in registered_aliases
-    }
+            errors.append(
+                f"Backend MCP entrypoint is registered more than once: {alias}.{function_name}"
+            )
     module_registries = {
         registry.parent.relative_to(registry_root).as_posix(): registry
         for registry in registry_root.rglob("registry.go")
         if registry != root_registry and TOOL_NAME_PATTERN.search(registry.read_text(encoding="utf-8"))
     }
-    for module_path in sorted(set(module_registries) - registered_modules):
-        errors.append(f"Backend MCP Tool module is not registered: {module_path}")
-    for module_path in sorted(registered_modules - set(module_registries)):
-        errors.append(f"Backend registered MCP module has no Tool registry: {module_path}")
+
+    available_entrypoints: dict[tuple[str, str], str] = {}
+    for module_path, registry in module_registries.items():
+        source = registry.read_text(encoding="utf-8")
+        for function_name, section in go_function_sections(source).items():
+            if function_name.startswith("Register") and TOOL_NAME_PATTERN.search(section):
+                available_entrypoints[(module_path, function_name)] = section
+
+    registered_entrypoints: list[tuple[str, str]] = []
+    for alias, function_name in register_calls:
+        module_path = imported_modules.get(alias)
+        if module_path is None:
+            continue
+        entrypoint = (module_path, function_name)
+        registered_entrypoints.append(entrypoint)
+        if entrypoint not in available_entrypoints:
+            errors.append(
+                f"Backend registered MCP entrypoint has no Tool registry: "
+                f"{module_path}.{function_name}"
+            )
+    for module_path, function_name in sorted(set(available_entrypoints) - set(registered_entrypoints)):
+        errors.append(f"Backend MCP Tool entrypoint is not registered: {module_path}.{function_name}")
 
     backend_tool_scopes: dict[str, str] = {}
-    for module_path in sorted(registered_modules & set(module_registries)):
-        registry = module_registries[module_path]
+    for entrypoint in registered_entrypoints:
+        source = available_entrypoints.get(entrypoint)
+        if source is None:
+            continue
         current_scope = ""
         scope_indent = -1
-        for line in registry.read_text(encoding="utf-8").splitlines():
+        for line in source.splitlines():
             indent = len(line) - len(line.lstrip())
             if scope_match := TOOL_SCOPE_PATTERN.search(line):
                 current_scope = scope_declarations.get(scope_match.group(1), "")

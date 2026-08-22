@@ -43,6 +43,11 @@
     },
     {
       "kind": "direct",
+      "prompt": "Use a saved Termous rename preset to preview a regex batch rename in /srv/releases, show every changed mapping, then start it after approval and page through the final result.",
+      "expected_skills": ["termous-sftp"]
+    },
+    {
+      "kind": "direct",
       "prompt": "Start a loopback-only local SSH forward from a connected Termous session, then inspect its traffic counters.",
       "expected_skills": ["termous-port-forwarding"]
     },
@@ -94,6 +99,11 @@
     {
       "kind": "negative",
       "prompt": "Write a TypeScript function that sorts an in-memory array.",
+      "expected_skills": []
+    },
+    {
+      "kind": "negative",
+      "prompt": "Use a regex to batch rename photos in my local C:\\Pictures folder without Termous or a remote host.",
       "expected_skills": []
     },
     {
