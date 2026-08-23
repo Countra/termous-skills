@@ -36,8 +36,8 @@ ALLOWED_APPROVALS = {"none", "per-call"}
 ROUTING_KINDS = {"direct", "cross-domain", "ambiguous", "negative"}
 EXPECTED_CONTRACT_VERSION = 1
 EXPECTED_SKILL_COUNT = 6
-EXPECTED_TOOL_COUNT = 73
-EXPECTED_SCOPE_COUNT = 28
+EXPECTED_TOOL_COUNT = 75
+EXPECTED_SCOPE_COUNT = 29
 
 
 def read_json(path: Path, errors: list[str]) -> object:

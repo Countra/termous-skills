@@ -9,7 +9,7 @@ Termous Skills provide focused workflows for the Termous MCP server. They do not
 | `termous-remote-ops` | Saved hosts, SSH sessions, commands, output, and interruption | `hosts:read`, `hosts:probe`, `sessions:read`, `sessions:connect`, `sessions:close`, `commands:execute`, `commands:read`, `commands:interrupt` |
 | `termous-system-ops` | Inventory, processes, systemd, and Docker on a connected Linux session | `system:read`, `processes:read`, `processes:terminate`, `services:read`, `services:manage`, `docker:read`, `docker:manage` |
 | `termous-crontab` | Structured jobs in the current SSH user's Crontab | `crontab:read`, `crontab:write` |
-| `termous-sftp` | SFTP sessions, remote files, batch rename, and file transfers | `sftp:read`, `sftp:connect`, `sftp:close`, `sftp:write`, `sftp:transfer`, `sftp:cancel`, `sftp:batch_rename` |
+| `termous-sftp` | SFTP sessions, remote files, Linux file-name search, batch rename, and file transfers | `sftp:read`, `sftp:connect`, `sftp:close`, `sftp:write`, `sftp:transfer`, `sftp:cancel`, `sftp:batch_rename`, `sftp:file_search` |
 | `termous-port-forwarding` | Saved and inline local, remote, or dynamic forwarding | `forwarding:read`, `forwarding:manage` |
 | `termous-snippets` | Saved command snippets and groups | `snippets:read`, `snippets:write` |
 
@@ -27,7 +27,7 @@ After changing a Termous MCP client's Scopes or approval-bypass setting, reconne
 
 ## Maintaining MCP coverage
 
-`contracts/mcp-tools.json` mirrors only the stable Tool name, Scope, approval class, and primary Skill ownership. It intentionally does not duplicate Tool schemas or Backend DTOs.
+`contracts/mcp-tools.json` mirrors only the stable Tool name, Scope, approval class, and primary Skill ownership. It intentionally does not duplicate Tool schemas or Backend DTOs. The current contract covers 75 Tools and 29 Scopes.
 
 Install development dependencies and validate the standalone repository:
 

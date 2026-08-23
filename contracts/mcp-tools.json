@@ -1,8 +1,8 @@
 {
   "contract_version": 1,
   "mcp_protocol_version": "2025-11-25",
-  "tool_count": 73,
-  "scope_count": 28,
+  "tool_count": 75,
+  "scope_count": 29,
   "scopes": [
     "hosts:read",
     "hosts:probe",
@@ -19,6 +19,7 @@
     "sftp:transfer",
     "sftp:cancel",
     "sftp:batch_rename",
+    "sftp:file_search",
     "system:read",
     "processes:read",
     "processes:terminate",
@@ -112,6 +113,8 @@
     { "name": "termous.sftp.files.batch_rename.start", "skill": "termous-sftp", "scope": "sftp:batch_rename", "approval": "per-call" },
     { "name": "termous.sftp.files.batch_rename.get", "skill": "termous-sftp", "scope": "sftp:batch_rename", "approval": "none" },
     { "name": "termous.sftp.files.batch_rename.result", "skill": "termous-sftp", "scope": "sftp:batch_rename", "approval": "none" },
-    { "name": "termous.sftp.files.batch_rename.cancel", "skill": "termous-sftp", "scope": "sftp:cancel", "approval": "none" }
+    { "name": "termous.sftp.files.batch_rename.cancel", "skill": "termous-sftp", "scope": "sftp:cancel", "approval": "none" },
+    { "name": "termous.sftp.files.name_search.capability", "skill": "termous-sftp", "scope": "sftp:file_search", "approval": "none" },
+    { "name": "termous.sftp.files.name_search.run", "skill": "termous-sftp", "scope": "sftp:file_search", "approval": "none" }
   ]
 }

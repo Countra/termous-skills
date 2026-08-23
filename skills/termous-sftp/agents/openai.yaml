@@ -1,4 +1,4 @@
 interface:
   display_name: "Termous SFTP"
-  short_description: "Manage SFTP files, batch renames, and controlled transfers"
-  default_prompt: "Use $termous-sftp to browse remote files, preview a batch rename, or perform an approval-controlled SFTP transfer."
+  short_description: "Search and manage remote files with controlled transfers"
+  default_prompt: "Use $termous-sftp to search or browse remote files, preview a batch rename, or perform an approval-controlled transfer."

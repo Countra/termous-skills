@@ -48,6 +48,11 @@
     },
     {
       "kind": "direct",
+      "prompt": "Use the Termous SFTP file session to check fd capability, then search the connected Linux host for PDF file names under /srv without using a shell fallback.",
+      "expected_skills": ["termous-sftp"]
+    },
+    {
+      "kind": "direct",
       "prompt": "Start a loopback-only local SSH forward from a connected Termous session, then inspect its traffic counters.",
       "expected_skills": ["termous-port-forwarding"]
     },
@@ -104,6 +109,11 @@
     {
       "kind": "negative",
       "prompt": "Use a regex to batch rename photos in my local C:\\Pictures folder without Termous or a remote host.",
+      "expected_skills": []
+    },
+    {
+      "kind": "negative",
+      "prompt": "Search this local Windows computer for every file named report.pdf without using Termous.",
       "expected_skills": []
     },
     {
