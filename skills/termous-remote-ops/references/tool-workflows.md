@@ -1,13 +1,16 @@
 # SSH and command workflows
 
-## Host and session discovery
+## Host, access Profile, and session discovery
 
 1. Call `termous.hosts.list` and match user-provided names, tags, or endpoints to one exact `host_id`.
-2. Treat `unknown`, `checking`, `online`, `offline`, and `unavailable` as cached reachability only. Use `termous.hosts.refresh_reachability` only when a fresh hint is requested and `hosts:probe` is available.
-3. Call `termous.sessions.list` and reuse only a connected, ready SSH session unless the user requests a new one. Poll an existing matching session that is connecting or otherwise pre-ready instead of creating a duplicate.
-4. Only when no matching active session can be used, call `termous.sessions.connect` once with a stable, non-empty `client_request_id`, then poll `termous.sessions.get`.
-5. `waiting_host_trust` requires a decision in Termous; failed or disconnected sessions require an explicit retry decision.
-6. If a connect response is immediately lost, repeat the identical request with the same ID. After a longer interruption, list sessions before creating another one.
+2. Call `termous.hosts.access_profiles.list` with that `host_id`. It returns the host's sanitized SSH, file-access, and remote-desktop routing catalog. Use it only for selection and display; it intentionally omits credentials, credential IDs, Host Key material, proxy identifiers, and protocol target details.
+3. When the user selected only the Host, resolve the one SSH Profile marked `is_default` and keep `host_id` as the connect selector. When the user selected a Profile, endpoint, or username, resolve one exact `ssh_profile_id` and use that exact selector. If the choice is ambiguous, or the category has no valid default, stop and ask rather than guessing.
+4. Treat `unknown`, `checking`, `online`, `offline`, and `unavailable` as cached Host reachability only. Use `termous.hosts.refresh_reachability` only when a fresh hint is requested and `hosts:probe` is available; it does not prove that every SSH Profile is usable.
+5. Call `termous.sessions.list` and reuse only a connected, ready SSH session whose actual `ssh_profile_id` matches the selected Profile unless the user requests a new one. Poll an existing matching session that is connecting or otherwise pre-ready instead of creating a duplicate.
+6. Only when no matching active session can be used, call `termous.sessions.connect` once with a stable, non-empty `client_request_id`, then poll `termous.sessions.get`. The input must contain exactly one of `host_id` and `ssh_profile_id`; `host_id` permanently means the authoritative default SSH Profile at execution time.
+7. Preserve the actual `host_id`, `ssh_profile_id`, endpoint, and username returned by the Session. Do not project the Host's default connection identity onto a Session created from a secondary Profile.
+8. `waiting_host_trust` requires a decision in Termous; failed or disconnected sessions require an explicit retry decision.
+9. If a connect response is immediately lost, repeat the identical selector and request ID. Reusing that ID with a different Host or SSH Profile is an idempotency conflict. After a longer interruption, list sessions before creating another one.
 
 ## Dispatch and read output
 

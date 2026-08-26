@@ -1,4 +1,4 @@
 interface:
   display_name: "Termous Remote Ops"
-  short_description: "Manage Termous SSH sessions and commands"
-  default_prompt: "Use $termous-remote-ops to inspect a saved host and run a controlled SSH command."
+  short_description: "Discover hosts and manage exact SSH sessions"
+  default_prompt: "Use $termous-remote-ops to inspect a saved host's access profiles and run a controlled SSH command through the selected route."

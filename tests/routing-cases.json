@@ -8,6 +8,16 @@
     },
     {
       "kind": "direct",
+      "prompt": "List the sanitized SSH, file, and remote-desktop access profiles for the saved Termous host named staging, including which profile is the default.",
+      "expected_skills": ["termous-remote-ops"]
+    },
+    {
+      "kind": "direct",
+      "prompt": "Connect to the saved Termous host staging through its non-default SSH access profile named deploy-user, then run whoami.",
+      "expected_skills": ["termous-remote-ops"]
+    },
+    {
+      "kind": "direct",
       "prompt": "读取 Termous 中测试2会话的上一条命令输出，保留输出游标。",
       "expected_skills": ["termous-remote-ops"]
     },
@@ -38,6 +48,11 @@
     },
     {
       "kind": "direct",
+      "prompt": "Connect a Termous SFTP session through the non-default file access profile named deploy-files, then list /srv/releases.",
+      "expected_skills": ["termous-sftp"]
+    },
+    {
+      "kind": "direct",
       "prompt": "通过 Termous SFTP 将一台远端主机的目录复制到另一台主机，并持续报告传输进度。",
       "expected_skills": ["termous-sftp"]
     },
@@ -54,6 +69,11 @@
     {
       "kind": "direct",
       "prompt": "Start a loopback-only local SSH forward from a connected Termous session, then inspect its traffic counters.",
+      "expected_skills": ["termous-port-forwarding"]
+    },
+    {
+      "kind": "direct",
+      "prompt": "Start a one-off Termous local forward through the exact non-default SSH access profile named deploy-user, without using the host default.",
       "expected_skills": ["termous-port-forwarding"]
     },
     {

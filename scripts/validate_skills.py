@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import re
 import sys
@@ -36,8 +37,13 @@ ALLOWED_APPROVALS = {"none", "per-call"}
 ROUTING_KINDS = {"direct", "cross-domain", "ambiguous", "negative"}
 EXPECTED_CONTRACT_VERSION = 1
 EXPECTED_SKILL_COUNT = 6
-EXPECTED_TOOL_COUNT = 75
+EXPECTED_TOOL_COUNT = 76
 EXPECTED_SCOPE_COUNT = 29
+LEGACY_TOOL_COUNT = 75
+LEGACY_TOOL_CONTRACT_SHA256 = "bf346a7314f0fbd97fce3cef954a1888cd34ef2d58ddb3ef8ccd44f2a6dc832d"
+APPENDED_TOOL_CONTRACT = (
+    ("termous.hosts.access_profiles.list", "termous-remote-ops", "hosts:read", "none"),
+)
 
 
 def read_json(path: Path, errors: list[str]) -> object:
@@ -107,6 +113,26 @@ def validate_contract(errors: list[str]) -> tuple[dict[str, object], set[str], s
         errors.append(f"contracts/mcp-tools.json: expected {EXPECTED_SCOPE_COUNT} Scopes, found {len(scopes)}")
     if len(tools) != EXPECTED_TOOL_COUNT:
         errors.append(f"contracts/mcp-tools.json: expected {EXPECTED_TOOL_COUNT} Tools, found {len(tools)}")
+
+    legacy_rows = [
+        f"{tool.get('name')}\t{tool.get('skill')}\t{tool.get('scope')}\t{tool.get('approval')}"
+        for tool in tools[:LEGACY_TOOL_COUNT]
+    ]
+    legacy_digest = hashlib.sha256("\n".join(legacy_rows).encode("utf-8")).hexdigest()
+    if len(tools) >= LEGACY_TOOL_COUNT and legacy_digest != LEGACY_TOOL_CONTRACT_SHA256:
+        errors.append("contracts/mcp-tools.json: existing Tool order, owner, Scope, or approval changed")
+    appended_contract = tuple(
+        (
+            tool.get("name"),
+            tool.get("skill"),
+            tool.get("scope"),
+            tool.get("approval"),
+        )
+        for tool in tools[LEGACY_TOOL_COUNT:]
+        if isinstance(tool, dict)
+    )
+    if appended_contract != APPENDED_TOOL_CONTRACT:
+        errors.append("contracts/mcp-tools.json: new Tools must retain the expected order, owner, Scope, and approval")
 
     names: list[str] = []
     owners: set[str] = set()

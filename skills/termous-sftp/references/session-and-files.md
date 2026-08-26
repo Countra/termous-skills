@@ -3,19 +3,22 @@
 ## Resolve a host and create a file session
 
 1. Call `termous.hosts.list` and resolve the requested saved host to one exact `host_id`.
-2. Call `termous.sftp.sessions.list`. A returned session belongs to the current MCP client, but still verify its `host_id`, status, and generation.
-3. Reuse it when connected and ready. Keep polling an existing connecting or pre-ready session; for an existing failed or disconnected session, ask before calling `termous.sftp.sessions.reconnect`. Generate one stable `client_request_id` and call `termous.sftp.sessions.connect` only when no current-client session matches the exact requested host.
-4. Poll `termous.sftp.sessions.get` using the selected session's `id` as `file_session_id`.
-5. Handle states explicitly:
+2. Call `termous.hosts.access_profiles.list` with that Host. The catalog is a sanitized routing view. For a Host-only request, resolve the one file Profile marked `is_default` and retain `host_id` as the connect selector. For an explicit Profile request, resolve one exact `file_access_profile_id`. A current SFTP Profile also identifies its bound SSH Profile, but that binding is not an interchangeable selector.
+3. Call `termous.sftp.sessions.list`. A returned session belongs to the current MCP client, but still verify its actual `host_id`, `file_access_profile_id`, `ssh_profile_id`, engine, namespace, status, capabilities, and generation.
+4. Reuse it when connected and ready only if its `file_access_profile_id` matches the selected Profile. Keep polling an existing matching connecting or pre-ready session; for an existing failed or disconnected session, ask before calling `termous.sftp.sessions.reconnect`.
+5. Generate one stable `client_request_id` and call `termous.sftp.sessions.connect` only when no matching current-client session exists. Supply exactly one of `host_id` and `file_access_profile_id`; `host_id` permanently resolves the authoritative default file Profile at execution time. Both empty and both present are invalid.
+6. Poll `termous.sftp.sessions.get` using the selected session's `id` as `file_session_id`.
+7. Handle states explicitly:
    - connected and ready: retain `connection_generation` and continue;
    - connecting or a pre-ready phase: wait and poll;
    - waiting for Host Key trust: ask the user to decide in Termous;
    - failed or disconnected: report the stable error and stop or ask before reconnecting.
-6. If a connect result is immediately lost, retry the identical payload with the same request ID. This is a bounded in-memory recovery mechanism, not a persistent idempotency key; after a longer interruption, call `termous.sftp.sessions.list` before creating another session.
+8. If a connect result is immediately lost, retry the identical selector and payload with the same request ID. Reusing that ID with a different Host or file Profile is an idempotency conflict. This is a bounded in-memory recovery mechanism, not a persistent idempotency key; after a longer interruption, call `termous.sftp.sessions.list` before creating another session.
 
 ## Reconnect or close a file session
 
 - Keep polling a connecting or pre-ready session. Use `termous.sftp.sessions.reconnect` only for an existing MCP-owned session in failed or disconnected state; a reconnect that actually starts a new connection generation changes `connection_generation`, so refresh the session before any later operation.
+- Reconnect preserves the File Session's exact file Profile and bound SSH Profile. Do not replace it with the Host defaults if those defaults changed after creation.
 - Use `termous.sftp.sessions.close` only when the user requests it or when a workflow explicitly requires cleanup. Re-list or get the session to verify the result.
 - Termous Desktop displays MCP-created file sessions as MCP-managed resources and may operate or close them. If a previously visible session becomes not found, re-list current sessions and report that it no longer exists; do not automatically recreate it.
 - Never substitute `termous.sessions.*` SSH tools. Interactive terminal sessions and SFTP file sessions have separate identities and lifecycles.

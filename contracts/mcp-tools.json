@@ -1,7 +1,7 @@
 {
   "contract_version": 1,
   "mcp_protocol_version": "2025-11-25",
-  "tool_count": 75,
+  "tool_count": 76,
   "scope_count": 29,
   "scopes": [
     "hosts:read",
@@ -115,6 +115,7 @@
     { "name": "termous.sftp.files.batch_rename.result", "skill": "termous-sftp", "scope": "sftp:batch_rename", "approval": "none" },
     { "name": "termous.sftp.files.batch_rename.cancel", "skill": "termous-sftp", "scope": "sftp:cancel", "approval": "none" },
     { "name": "termous.sftp.files.name_search.capability", "skill": "termous-sftp", "scope": "sftp:file_search", "approval": "none" },
-    { "name": "termous.sftp.files.name_search.run", "skill": "termous-sftp", "scope": "sftp:file_search", "approval": "none" }
+    { "name": "termous.sftp.files.name_search.run", "skill": "termous-sftp", "scope": "sftp:file_search", "approval": "none" },
+    { "name": "termous.hosts.access_profiles.list", "skill": "termous-remote-ops", "scope": "hosts:read", "approval": "none" }
   ]
 }

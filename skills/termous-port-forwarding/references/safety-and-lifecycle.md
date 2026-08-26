@@ -13,7 +13,7 @@
 
 - `profile_id` uses the saved host and immutable approval-time profile snapshot. It creates `background_profile` and rejects all inline forwarding fields.
 - `session_id` creates `session` and reuses that exact connected SSH session. Closing or losing the session stops its session-scoped forwards.
-- `host_id` creates `background_once` with a dedicated background SSH transport owned by the forward instance. It does not create or reuse an interactive terminal session.
+- `host_id` creates `background_once` with a dedicated background SSH transport through the Host's authoritative default SSH Profile. Termous resolves that default to an exact `ssh_profile_id` before approval and idempotency comparison; if the default changes before a retry, reusing the old `client_request_id` can therefore return an idempotency conflict. `ssh_profile_id` creates the same lifecycle through that exact Profile. Neither selector creates or reuses an interactive terminal session, and they are mutually exclusive.
 - Profile and one-off background instances are independent of an interactive session, but all instances end when stopped or when Termous Core shuts down.
 - Never substitute one source for another to avoid a disconnected session, a changed profile, approval, or Host Key confirmation.
 
@@ -51,7 +51,7 @@
 
 Always report:
 
-- exact profile, session, or host source and resulting lifecycle;
+- exact requested profile, session, or host source, the runtime `ssh_profile_id` when present, and resulting lifecycle;
 - mode and a plain-language network direction;
 - requested listener and actual `bound_address` when running;
 - target for local and remote modes, or the unauthenticated SOCKS5 warning for dynamic mode;

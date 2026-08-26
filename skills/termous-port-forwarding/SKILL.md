@@ -1,6 +1,6 @@
 ---
 name: termous-port-forwarding
-description: Use Termous MCP to inspect saved forwarding profiles and Core-managed instances or start and stop local, remote, and dynamic forwarding through saved hosts or Termous SSH sessions. Trigger only for operating a Termous-managed tunnel or SOCKS5 proxy; do not use for conceptual questions or requests to run local ssh -L, -R, or -D commands.
+description: Use Termous MCP to inspect saved forwarding profiles and Core-managed instances or start and stop local, remote, and dynamic forwarding through a saved Host default, an exact SSH access Profile, or a Termous SSH session. Trigger only for operating a Termous-managed tunnel or SOCKS5 proxy; do not use for conceptual questions or requests to run local ssh -L, -R, or -D commands.
 ---
 
 # Termous Port Forwarding
@@ -13,7 +13,8 @@ Use Termous MCP as the only interface to saved forwarding profiles and live forw
 2. Resolve one exact start source:
    - `profile_id` starts the saved profile as `background_profile` and accepts no inline forwarding fields;
    - `session_id` reuses one connected SSH session and creates a `session` forward;
-   - `host_id` opens a dedicated one-off background connection and creates a `background_once` forward.
+   - `host_id` opens a dedicated one-off background connection through that Host's default SSH Profile;
+   - `ssh_profile_id` opens the one-off background connection through that exact SSH Profile.
 3. For an inline start, choose `local`, `remote`, or `dynamic`; confirm the listener, network direction, and exposure before proceeding. `bind_host` defaults to `127.0.0.1` when omitted.
 4. State the exact source, mode, listener, target when applicable, and lifecycle. Generate one stable `client_request_id` for the logical start and call `termous.forwarding.instances.start` once.
 5. The start passes through the Termous approval gate. A client explicitly configured for approval bypass executes the granted operation without a pending decision; bypass never adds scopes or approves a Host Key.
@@ -25,7 +26,7 @@ For exact mode directions, start payloads, and status handling, read [references
 ## Non-negotiable boundaries
 
 - Saved forwarding profiles are read-only through MCP. Do not emulate profile creation, editing, or deletion with another tool.
-- Use exactly one of `profile_id`, `session_id`, or `host_id`. Never silently switch source or lifecycle after the user confirms it.
+- Use exactly one source selector: `profile_id`, `session_id`, `host_id`, or `ssh_profile_id`. For an inline background start, `host_id` means the default SSH Profile and `ssh_profile_id` means one exact Profile. Never combine selectors or silently switch source or lifecycle after confirmation.
 - `dynamic` is an unauthenticated SOCKS5 listener. Never expose it beyond loopback without explicit user intent and a clear warning.
 - Forward instances are global to Termous Core, not owned by an MCP client. A stop can affect an instance created in the UI or through another client.
 - Never approve, replace, or conceal a Host Key decision. Direct the user to the native Termous prompt.

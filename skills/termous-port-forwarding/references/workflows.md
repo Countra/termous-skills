@@ -13,7 +13,7 @@ The forwarding domain exposes these six tools:
 
 The four read tools require `forwarding:read`. Start and stop require `forwarding:manage`. When status verification matters, ensure the client has both scopes before starting.
 
-When the user has not supplied an exact source ID, call `termous.sessions.list` with `sessions:read` to resolve a connected `session_id`, or `termous.hosts.list` with `hosts:read` to resolve a saved `host_id`. Do not infer the focused tab, use an SFTP file-session ID, require another Skill to be installed, or open another SSH connection.
+When the user has not supplied an exact source ID, call `termous.sessions.list` with `sessions:read` to resolve a connected `session_id`, or call `termous.hosts.list` and `termous.hosts.access_profiles.list` with `hosts:read` to resolve a saved Host and its SSH Profiles. Do not infer the focused tab, use an SFTP file-session ID, require another Skill to be installed, or open another SSH connection.
 
 ## Understand the forwarding direction
 
@@ -69,7 +69,7 @@ Example local forward:
 
 ## Start a one-off background forward
 
-1. Resolve one exact saved `host_id`.
+1. Resolve one exact saved Host and inspect its access catalog. Use `host_id` only when the user wants that Host's default SSH Profile; use `ssh_profile_id` when the user chose a particular SSH Profile, endpoint, or username. Never send both.
 2. Explain that Termous opens and owns a dedicated background SSH transport for this instance. It does not reuse an interactive session.
 3. Supply the same inline mode and address fields used by a session start.
 4. If the host is not yet trusted or its key changed, the instance enters `waiting_host_trust`; only the native Termous UI can decide it.
@@ -87,15 +87,18 @@ Example dynamic forward:
 }
 ```
 
+An exact non-default SSH Profile uses the same inline forwarding fields with `ssh_profile_id` in place of `host_id`. Reusing a `client_request_id` with a different selector is an idempotency conflict.
+
 ## Observe startup and traffic
 
-The main statuses are `starting`, `waiting_host_trust`, `running`, `stopping`, `stopped`, and `failed`. Phases may further report queued work, session or authentication resolution, SSH dialing, Host Key waiting, listener startup, readiness, stopping, or failure.
+The main statuses are `starting`, `waiting_host_trust`, `running`, `reconnecting`, `stopping`, `stopped`, and `failed`. Phases may further report queued work, session or authentication resolution, SSH dialing, Host Key waiting, listener startup, retry waiting, readiness, stopping, or failure.
 
 1. Keep the returned `forward_id`.
 2. Poll `.instances.get` at a reasonable interval while startup is in progress. Do not treat `progress=100` alone as proof of a usable tunnel; require `status=running` and `phase=ready`.
-3. Report `bound_address`, `active_connections`, `total_connections`, `bytes_in`, and `bytes_out` only as observed counters.
-4. If Host Key confirmation is required, stop polling aggressively and ask the user to inspect Termous.
-5. If failed, report the safe status message and stable tool error when present. MCP intentionally does not expose raw internal failure text or a Host Key challenge ID.
+3. Preserve and report the returned `host_id` and actual `ssh_profile_id`. The resolved Profile is fixed for this instance; a later new `host_id` request may use a new default, so never project the current Host default onto an existing instance.
+4. Report `bound_address`, `active_connections`, `total_connections`, `bytes_in`, and `bytes_out` only as observed counters.
+5. If Host Key confirmation is required, stop polling aggressively and ask the user to inspect Termous.
+6. If failed, report the safe status message and stable tool error when present. MCP intentionally does not expose raw internal failure text or a Host Key challenge ID.
 
 ## Stop an instance
 
