@@ -405,7 +405,14 @@ def validate_backend(backend_root: Path, contract: dict[str, object], tool_names
                 f"contract Scope differs from Backend for {tool_name}: {expected_scope!r} != {backend_scope!r}"
             )
 
-    match = PROTOCOL_PATTERN.search(handler_file.read_text(encoding="utf-8"))
+    match = PROTOCOL_PATTERN.search(
+        "\n".join(
+            (
+                handler_file.read_text(encoding="utf-8"),
+                model_file.read_text(encoding="utf-8"),
+            )
+        )
+    )
     if match is None or match.group(1) != contract.get("mcp_protocol_version"):
         errors.append("contract MCP protocol version differs from Backend")
 
