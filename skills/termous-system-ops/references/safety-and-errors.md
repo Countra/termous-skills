@@ -42,7 +42,7 @@ Read the structured error `code`, message, and `retryable` value. Do not classif
 Common categories include:
 
 - Validation errors: correct the request without changing its intended target.
-- Session unavailable or disconnected: ask the user to restore an exact Termous SSH session; do not open another connection.
+- Session unavailable or disconnected: stop the operation and ask the user to rebind an exact ready SSH Session in the Termous UI; do not reconnect or substitute another Session.
 - Forbidden or missing Scope: update the client in Termous and reconnect MCP.
 - Approval rejected, expired, or cancelled: the mutation did not start.
 - Idempotency conflict: the same request ID was used with a different payload; stop and reconcile rather than choosing another ID automatically.

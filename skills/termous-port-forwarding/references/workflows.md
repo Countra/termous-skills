@@ -13,7 +13,7 @@ The forwarding domain exposes these six tools:
 
 The four read tools require `forwarding:read`. Start and stop require `forwarding:manage`. When status verification matters, ensure the client has both scopes before starting.
 
-When the user has not supplied an exact source ID, call `termous.sessions.list` with `sessions:read` to resolve a connected `session_id`, or call `termous.hosts.list` and `termous.hosts.access_profiles.list` with `hosts:read` to resolve a saved Host and its SSH Profiles. Do not infer the focused tab, use an SFTP file-session ID, require another Skill to be installed, or open another SSH connection.
+When a ready exact `TERMOUS_VERIFIED_RESOURCE` represents the referenced SSH source, use that `session_id` directly and skip `termous.sessions.list`. Otherwise, when the user has not supplied an exact source ID, call `termous.sessions.list` with `sessions:read` to resolve a connected `session_id`, or call `termous.hosts.list` and `termous.hosts.access_profiles.list` with `hosts:read` to resolve a saved Host and its SSH Profiles. Do not infer the focused tab, use an SFTP file-session ID, require another Skill to be installed, or open another SSH connection.
 
 ## Understand the forwarding direction
 
@@ -47,7 +47,7 @@ If the profile changes or is deleted while approval is pending, Termous refuses 
 
 ## Start from an existing SSH session
 
-1. Resolve one exact connected SSH `session_id`. Do not use a local terminal or an SFTP file-session ID.
+1. Use the ready exact verified SSH resource when it represents the requested source; otherwise resolve one exact connected SSH `session_id`. Do not use a local terminal or an SFTP file-session ID.
 2. Confirm that ending this SSH session will also stop the `session` forward.
 3. Supply the inline mode and addresses. `bind_port` is required and must be in the range 1 to 65535. `bind_host` defaults to `127.0.0.1`.
 4. For `local` or `remote`, supply a non-empty `target_host` and a target port in the same range. For `dynamic`, omit both target fields.

@@ -7,6 +7,10 @@ description: Use Termous MCP to search, read, organize, create, update, delete, 
 
 Use Termous MCP to manage the command library stored by Termous. Reading or changing a snippet does not execute it. Execute selected content only through the separate SSH command tools.
 
+## Verified SSH resource binding
+
+A ready exact `TERMOUS_VERIFIED_RESOURCE` for `kind=ssh_session` selects the SSH target only when the user asks to execute a snippet on the referenced connection. Pass its `session_id` to the separate command workflow without first calling `termous.sessions.list`. Never treat `source_context.entity_id`, `host_id`, or `ssh_profile_id` as a Session ID. If that exact binding is unavailable, stop for explicit rebinding instead of discovering or substituting another Session. The binding never authorizes execution merely because a snippet was read.
+
 ## Core workflow
 
 1. Inspect the advertised Tools. Reads require `snippets:read`; writes require `snippets:write`; optional execution additionally requires the relevant SSH session and command Scopes.

@@ -7,10 +7,14 @@ description: Use structured Termous MCP tools to inspect Linux inventory and pro
 
 Use the structured Termous RemoteOps tools as the only interface to Linux inventory, processes, systemd, and Docker. Never open another SSH connection or replace a missing structured capability with an arbitrary shell command.
 
+## Verified SSH resource binding
+
+When the system context contains a ready exact `TERMOUS_VERIFIED_RESOURCE` for `kind=ssh_session`, use its `session_id` directly and do not call `termous.sessions.list` first. Never treat `source_context.entity_id`, `host_id`, or `ssh_profile_id` as a Session ID. If the exact bound Session becomes unavailable, stop and ask the user to rebind it in Termous; never discover or substitute another Session automatically. Without a ready verified resource, resolve an exact Session through the ordinary Termous discovery workflow.
+
 ## Core workflow
 
 1. Inspect the tools advertised by the current MCP connection and confirm the required read or manage Scope is present.
-2. Resolve one exact connected Linux SSH `session_id`. Never infer the current, selected, or focused Termous tab.
+2. Use the ready verified binding when present; otherwise resolve one exact connected Linux SSH `session_id`. Never infer the current, selected, or focused Termous tab.
 3. Read the current capability or resource state before acting. Treat capability responses as session-specific snapshots, not permanent host facts.
 4. For a mutation, identify one exact process, service Unit, or container and show the intended action before calling its Tool.
 5. Use one stable `client_request_id` for the logical mutation. Termous applies its native approval policy and revalidates sensitive targets before execution.

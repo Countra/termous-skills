@@ -108,6 +108,31 @@
     },
     {
       "kind": "direct",
+      "prompt": "Inspect the highest-CPU processes on the exact connected SSH session referenced from my Termous workstation.",
+      "expected_skills": ["termous-system-ops"]
+    },
+    {
+      "kind": "cross-domain",
+      "prompt": "Read the saved health-check snippet and execute its exact command on the SSH session already referenced by this Agent conversation.",
+      "expected_skills": ["termous-snippets", "termous-remote-ops"]
+    },
+    {
+      "kind": "direct",
+      "prompt": "Create a loopback local forward through the exact SSH session referenced by this Agent conversation.",
+      "expected_skills": ["termous-port-forwarding"]
+    },
+    {
+      "kind": "direct",
+      "prompt": "List the current user's Crontab jobs on the exact SSH session referenced by this Agent conversation.",
+      "expected_skills": ["termous-crontab"]
+    },
+    {
+      "kind": "direct",
+      "prompt": "Although this Agent references an SSH session, create a separate Termous SFTP file session and list /srv/releases.",
+      "expected_skills": ["termous-sftp"]
+    },
+    {
+      "kind": "direct",
       "prompt": "The structured Docker tool is unavailable; use Termous to inspect the container without falling back to a shell command.",
       "expected_skills": ["termous-system-ops"]
     },

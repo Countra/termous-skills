@@ -1,5 +1,7 @@
 # Session and file workflows
 
+An Agent-level `TERMOUS_VERIFIED_RESOURCE` binds an interactive SSH Session only. Never use its `session_id` as `file_session_id`, derive a File Session from its SSH Profile, or bypass current-client ownership and generation checks. Resolve SFTP independently below.
+
 ## Resolve a host and create a file session
 
 1. Call `termous.hosts.list` and resolve the requested saved host to one exact `host_id`.

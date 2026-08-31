@@ -7,6 +7,10 @@ description: Use Termous MCP SFTP sessions to browse or maintain files on saved 
 
 Use the Termous MCP server as the only interface to saved hosts, SFTP file sessions, remote files, and transfer tasks. Never obtain credentials or open a separate SSH/SFTP connection outside Termous.
 
+## SSH binding boundary
+
+`TERMOUS_VERIFIED_RESOURCE` currently describes an interactive SSH Session, not an SFTP File Session. Its `session_id` must never be passed as `file_session_id`, and it does not skip SFTP Host, file Profile, ownership, Session, or `connection_generation` resolution. Likewise, `source_context.entity_id`, `host_id`, and `ssh_profile_id` are not SFTP File Session IDs. Follow the normal SFTP workflow even when a verified SSH resource is present.
+
 ## Core workflow
 
 1. Inspect the tools advertised by the current MCP connection. If a required tool is absent, report its corresponding scope instead of substituting another interface. Host discovery uses `hosts:read`; SFTP session queries and file reads use `sftp:read`, connect/reconnect uses `sftp:connect`, close uses `sftp:close`, file writes use `sftp:write`, transfer start/get uses `sftp:transfer`, batch-rename presets/preview/start/status/result use `sftp:batch_rename`, Linux file-name capability/search uses `sftp:file_search`, and cancellation uses `sftp:cancel`.

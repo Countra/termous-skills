@@ -7,6 +7,10 @@ description: Use Termous MCP to inspect saved forwarding profiles and Core-manag
 
 Use Termous MCP as the only interface to saved forwarding profiles and live forwarding instances. Do not open a separate SSH connection or recreate a forward with shell commands.
 
+## Verified SSH resource binding
+
+When the requested forwarding source is the Agent's referenced connection and the system context contains a ready exact `TERMOUS_VERIFIED_RESOURCE` for `kind=ssh_session`, use its `session_id` as the sole start selector. Do not call `termous.sessions.list` first, and never reinterpret `source_context.entity_id`, `host_id`, or `ssh_profile_id` as that Session ID. If the exact binding is unavailable, stop and ask the user to rebind it; never switch to another Session, Profile, or background lifecycle automatically. The binding does not override an explicit user choice of a saved forwarding profile or one-off background source.
+
 ## Core workflow
 
 1. Inspect saved profiles with `termous.forwarding.profiles.list` and `.get`, or inspect Core-managed instances with `termous.forwarding.instances.list` and `.get`.

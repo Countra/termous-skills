@@ -7,10 +7,14 @@ description: Use structured Termous MCP tools to inspect and safely manage Cront
 
 Use the Termous MCP server as the only interface to the current SSH user's structured Crontab jobs. Never open another SSH connection, edit the raw Crontab, or substitute an arbitrary shell command for an unavailable structured tool.
 
+## Verified SSH resource binding
+
+When the system context contains a ready exact `TERMOUS_VERIFIED_RESOURCE` for `kind=ssh_session`, use its `session_id` for every Crontab capability, snapshot, and mutation call without first calling `termous.sessions.list`. Never use `source_context.entity_id`, `host_id`, or `ssh_profile_id` as a Session ID. If the binding is unavailable or becomes stale, stop and ask the user to rebind it; do not discover, connect, or substitute another Session automatically. Without a ready verified resource, use the normal Session resolution below.
+
 ## Core workflow
 
 1. Inspect the tools advertised by the current MCP connection. Crontab reads require `crontab:read`; mutations require `crontab:write`.
-2. Resolve one exact connected Linux SSH `session_id`. Never infer the current or focused Termous tab.
+2. Use the ready verified binding when present; otherwise resolve one exact connected Linux SSH `session_id`. Never infer the current or focused Termous tab.
 3. Call `termous.remoteops.crontab.capability` before assuming that Crontab is available, readable, or writable for the session user.
 4. Call `termous.remoteops.crontab.get` and retain its exact `username`, structured jobs, warnings, and `revision`. This API manages only that SSH user's Crontab and does not expose the raw whole-Crontab content.
 5. Before a create or update, show the exact session user, schedule, full command, and enabled state. Before a delete, show the exact job ID, schedule, and full command from the latest snapshot.

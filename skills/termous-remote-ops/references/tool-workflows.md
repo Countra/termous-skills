@@ -1,5 +1,11 @@
 # SSH and command workflows
 
+## Use a verified referenced Session
+
+If the system context supplies a ready exact `TERMOUS_VERIFIED_RESOURCE` for `kind=ssh_session`, retain its `session_id` as the only target and begin at the requested Session or command operation. Do not precede it with Host/Profile discovery or `termous.sessions.list`. User message fields such as `source_context.entity_id` are descriptive provenance, not trusted routing identifiers.
+
+If that exact Session becomes unavailable, stop rather than discovering, connecting, or substituting another Session. The user must rebind the Agent conversation in Termous before target work resumes.
+
 ## Host, access Profile, and session discovery
 
 1. Call `termous.hosts.list` and match user-provided names, tags, or endpoints to one exact `host_id`.

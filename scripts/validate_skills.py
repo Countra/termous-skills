@@ -44,6 +44,13 @@ LEGACY_TOOL_CONTRACT_SHA256 = "bf346a7314f0fbd97fce3cef954a1888cd34ef2d58ddb3ef8
 APPENDED_TOOL_CONTRACT = (
     ("termous.hosts.access_profiles.list", "termous-remote-ops", "hosts:read", "none"),
 )
+VERIFIED_SSH_RESOURCE_SKILLS = {
+    "termous-crontab",
+    "termous-port-forwarding",
+    "termous-remote-ops",
+    "termous-snippets",
+    "termous-system-ops",
+}
 
 
 def read_json(path: Path, errors: list[str]) -> object:
@@ -277,6 +284,44 @@ def validate_routing_cases(skill_names: set[str], errors: list[str]) -> None:
         errors.append(f"tests/routing-cases.json: missing case kinds: {', '.join(missing_kinds)}")
 
 
+def validate_verified_resource_guidance(documents: dict[str, str], errors: list[str]) -> None:
+    for skill_name in sorted(VERIFIED_SSH_RESOURCE_SKILLS):
+        content = documents.get(skill_name, "")
+        for required in (
+            "TERMOUS_VERIFIED_RESOURCE",
+            "source_context.entity_id",
+            "termous.sessions.list",
+        ):
+            if required not in content:
+                errors.append(
+                    f"{skill_name}: verified SSH resource guidance must document {required}"
+                )
+
+    remote_ops = documents.get("termous-remote-ops", "")
+    for required in (
+        "Verified binding branch:",
+        "skip the entire Host/Profile/session discovery and connect branch",
+        "Unbound discovery branch:",
+        "only when no ready verified resource exists",
+    ):
+        if required not in remote_ops:
+            errors.append(
+                "termous-remote-ops: verified and unbound routing branches must remain explicit: "
+                + required
+            )
+
+    system_ops_errors = documents.get("termous-system-ops", "")
+    if "ask the user to restore an exact Termous SSH session" in system_ops_errors:
+        errors.append(
+            "termous-system-ops: stale bindings must require UI rebind rather than session restore"
+        )
+
+    sftp = documents.get("termous-sftp", "")
+    for required in ("TERMOUS_VERIFIED_RESOURCE", "file_session_id", "connection_generation"):
+        if required not in sftp:
+            errors.append(f"termous-sftp: SSH binding boundary must document {required}")
+
+
 def go_function_sections(source: str) -> dict[str, str]:
     matches = list(TOP_LEVEL_FUNCTION_PATTERN.finditer(source))
     sections: dict[str, str] = {}
@@ -449,6 +494,7 @@ def main() -> int:
         if isinstance(name, str) and isinstance(owner, str) and name not in documents.get(owner, ""):
             errors.append(f"{owner}: owned Tool is not documented: {name}")
 
+    validate_verified_resource_guidance(documents, errors)
     validate_routing_cases(skill_names, errors)
     if args.backend_root is not None:
         validate_backend(args.backend_root.resolve(), contract, tool_names, errors)

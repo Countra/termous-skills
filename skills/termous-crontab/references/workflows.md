@@ -2,9 +2,9 @@
 
 ## Prepare the session
 
-1. Resolve the requested host and select one exact SSH session whose status is connected and whose phase is ready.
+1. If a ready exact `TERMOUS_VERIFIED_RESOURCE` supplies an SSH `session_id`, use only that Session and skip `termous.sessions.list`; otherwise resolve the requested host and select one exact SSH session whose status is connected and whose phase is ready.
 2. Use the same `session_id` for every capability, snapshot, and mutation call in the logical workflow.
-3. If no suitable Linux SSH session exists, use `$termous-remote-ops` and only its currently advertised session Tools to create or restore an appropriate connection when the user requested that action. Do not invent an SSH reconnect Tool. Host Key decisions remain in Termous.
+3. A missing ordinary target may use `$termous-remote-ops` to create or restore a connection only when the user requested that action. A stale verified binding must instead stop for explicit UI rebinding and must not be replaced by discovery or connection. Do not invent an SSH reconnect Tool. Host Key decisions remain in Termous.
 4. Do not substitute an SFTP file session ID or infer a session from the focused UI tab.
 
 ## Check capability
