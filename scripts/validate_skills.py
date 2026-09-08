@@ -37,12 +37,17 @@ ALLOWED_APPROVALS = {"none", "per-call"}
 ROUTING_KINDS = {"direct", "cross-domain", "ambiguous", "negative"}
 EXPECTED_CONTRACT_VERSION = 1
 EXPECTED_SKILL_COUNT = 6
-EXPECTED_TOOL_COUNT = 76
-EXPECTED_SCOPE_COUNT = 29
+EXPECTED_TOOL_COUNT = 81
+EXPECTED_SCOPE_COUNT = 30
 LEGACY_TOOL_COUNT = 75
 LEGACY_TOOL_CONTRACT_SHA256 = "bf346a7314f0fbd97fce3cef954a1888cd34ef2d58ddb3ef8ccd44f2a6dc832d"
 APPENDED_TOOL_CONTRACT = (
     ("termous.hosts.access_profiles.list", "termous-remote-ops", "hosts:read", "none"),
+    ("termous.sftp.files.delete.preview", "termous-sftp", "sftp:delete", "none"),
+    ("termous.sftp.files.delete.start", "termous-sftp", "sftp:delete", "per-call"),
+    ("termous.sftp.files.delete.get", "termous-sftp", "sftp:delete", "none"),
+    ("termous.sftp.files.delete.result", "termous-sftp", "sftp:delete", "none"),
+    ("termous.sftp.files.delete.cancel", "termous-sftp", "sftp:cancel", "none"),
 )
 VERIFIED_SSH_RESOURCE_SKILLS = {
     "termous-crontab",
@@ -368,18 +373,22 @@ def validate_backend(backend_root: Path, contract: dict[str, object], tool_names
             errors.append(
                 f"Backend MCP entrypoint is registered more than once: {alias}.{function_name}"
             )
-    module_registries = {
-        registry.parent.relative_to(registry_root).as_posix(): registry
-        for registry in registry_root.rglob("registry.go")
+    module_registries = [
+        registry
+        for registry in sorted(registry_root.rglob("*registry.go"))
         if registry != root_registry and TOOL_NAME_PATTERN.search(registry.read_text(encoding="utf-8"))
-    }
+    ]
 
     available_entrypoints: dict[tuple[str, str], str] = {}
-    for module_path, registry in module_registries.items():
+    for registry in module_registries:
+        module_path = registry.parent.relative_to(registry_root).as_posix()
         source = registry.read_text(encoding="utf-8")
         for function_name, section in go_function_sections(source).items():
             if function_name.startswith("Register") and TOOL_NAME_PATTERN.search(section):
-                available_entrypoints[(module_path, function_name)] = section
+                entrypoint = (module_path, function_name)
+                if entrypoint in available_entrypoints:
+                    errors.append(f"Backend MCP entrypoint is defined more than once: {module_path}.{function_name}")
+                available_entrypoints[entrypoint] = section
 
     registered_entrypoints: list[tuple[str, str]] = []
     for alias, function_name in register_calls:

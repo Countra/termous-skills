@@ -3,6 +3,16 @@
   "cases": [
     {
       "kind": "direct",
+      "prompt": "通过 Termous SFTP 预览 /srv/releases/old 的递归删除范围，确认后删除，并查询逐项结果。",
+      "expected_skills": ["termous-sftp"]
+    },
+    {
+      "kind": "direct",
+      "prompt": "Cancel my Termous SFTP deletion task and report which files were already removed and which outcomes remain uncertain.",
+      "expected_skills": ["termous-sftp"]
+    },
+    {
+      "kind": "direct",
       "prompt": "Connect to the saved host named staging and run uname -a, then report the exit code.",
       "expected_skills": ["termous-remote-ops"]
     },

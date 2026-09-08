@@ -1,6 +1,6 @@
 ---
 name: termous-sftp
-description: Use Termous MCP SFTP sessions to browse or maintain files on saved SSH hosts, search Linux file names with fd, perform previewed batch renames, transfer files between local and remote systems, copy between remote hosts, or inspect and cancel file tasks. Trigger only for Termous-managed SFTP work; do not use for local-only files, HTTP/S3 transfers, SCP, or an exact shell command.
+description: Use Termous MCP SFTP sessions to browse or maintain files on saved SSH hosts, search Linux file names with fd, perform previewed batch renames or deletions, transfer files between local and remote systems, copy between remote hosts, or inspect and cancel file tasks. Trigger only for Termous-managed SFTP work; do not use for local-only files, HTTP/S3 transfers, SCP, or an exact shell command.
 ---
 
 # Termous SFTP
@@ -13,7 +13,7 @@ Use the Termous MCP server as the only interface to saved hosts, SFTP file sessi
 
 ## Core workflow
 
-1. Inspect the tools advertised by the current MCP connection. If a required tool is absent, report its corresponding scope instead of substituting another interface. Host discovery uses `hosts:read`; SFTP session queries and file reads use `sftp:read`, connect/reconnect uses `sftp:connect`, close uses `sftp:close`, file writes use `sftp:write`, transfer start/get uses `sftp:transfer`, batch-rename presets/preview/start/status/result use `sftp:batch_rename`, Linux file-name capability/search uses `sftp:file_search`, and cancellation uses `sftp:cancel`.
+1. Inspect the tools advertised by the current MCP connection. If a required tool is absent, report its corresponding scope instead of substituting another interface. Host discovery uses `hosts:read`; SFTP session queries and file reads use `sftp:read`, connect/reconnect uses `sftp:connect`, close uses `sftp:close`, file writes use `sftp:write`, deletion preview/start/status/result uses `sftp:delete`, transfer start/get uses `sftp:transfer`, batch-rename presets/preview/start/status/result use `sftp:batch_rename`, Linux file-name capability/search uses `sftp:file_search`, and cancellation uses `sftp:cancel`.
 2. Call `termous.hosts.list` to resolve one exact saved `host_id`, then call `termous.hosts.access_profiles.list` for its sanitized access catalog. Select the default file Profile when the user chose only the Host, or one exact `file_access_profile_id` when the user chose a particular file Profile. Resolve ambiguous names with the user.
 3. Call `termous.sftp.sessions.list`. Reuse or poll a session only when its actual `file_access_profile_id` matches the selected file Profile; a matching `host_id` or `ssh_profile_id` alone is insufficient.
 4. Call `termous.sftp.sessions.connect` with one stable `client_request_id` only when no matching current-client session exists. Send exactly one selector: `host_id` means the category default, while `file_access_profile_id` means that exact Profile. Never send both or reinterpret one ID type as another.
@@ -28,6 +28,8 @@ For session and ordinary file call sequences, read [references/session-and-files
 
 ## Non-negotiable boundaries
 
+删除必须遵循 [references/deletion.md](references/deletion.md) 的完整预览、审批、任务和结果流程。预览、启动、状态及结果需要独立的 `sftp:delete`，取消仍使用 `sftp:cancel`。现有 `sftp:write` 不自动取得删除权限。
+
 - Manage only SFTP file sessions and transfer tasks visible to the current MCP client. Termous Desktop is a trusted management surface and may display or close MCP file sessions and display, cancel, or remove MCP transfer tasks without making them visible to another MCP client. Do not use interactive SSH session IDs as SFTP file session IDs.
 - Treat a Host as an asset and a file Profile as the exact access route. Match and reuse sessions by `file_access_profile_id`, not merely by Host or bound SSH Profile.
 - Never request, print, store, or infer passwords, private keys, bearer tokens, proxy credentials, or Host Key secrets.
@@ -40,7 +42,7 @@ For session and ordinary file call sequences, read [references/session-and-files
 - Do not claim that cancellation rolls back already completed files.
 - Do not bypass batch-rename preview, approval, plan-hash, ownership, or result checks with repeated single-file renames or shell commands.
 - Do not install or upgrade `fd` through MCP, and do not replace the dedicated file-name search with `commands.dispatch`, `find`, `locate`, or an ad hoc `fd` command. When capability is not ready, stop and direct the user to install it manually or through the Termous file manager.
-- Do not use unsupported deletion, same-host copy, image, or arbitrary binary-read operations through another interface. `files.rename` may rename or move an entry within one file session, but it is not a copy or delete substitute.
+- Do not use unsupported same-host copy, image, or arbitrary binary-read operations through another interface. `files.rename` may rename or move an entry within one file session, but it is not a copy or delete substitute. Use the dedicated deletion workflow, never Shell commands or an expanded target set.
 
 ## Connection failures
 

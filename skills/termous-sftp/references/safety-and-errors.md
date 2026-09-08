@@ -11,7 +11,7 @@
 
 ## Approval policy
 
-- `save_text`, `mkdir`, `rename`, `chmod`, batch-rename start, upload, download, and remote copy always pass through the Termous approval gate. By default, each logical request requires native approval; a client explicitly configured for approval bypass executes granted operations without a pending approval.
+- `save_text`, `mkdir`, `rename`, `chmod`, batch-rename start, deletion start, upload, download, and remote copy always pass through the Termous approval gate. By default, each logical request requires native approval; a client explicitly configured for approval bypass executes granted operations without a pending approval.
 - Approval is bound to the client, `client_request_id`, complete request content, target sessions, and connection generations.
 - Identical retries share the same approval or task within Termous's bounded in-memory recovery window. Reusing an ID with different content during that window is an idempotency conflict.
 - Rejected, expired, or cancelled approval does not authorize a file write or transfer start.
@@ -40,6 +40,9 @@
 - A stale generation means the file session changed after it was observed. Refresh the session and ask before creating a new logical request.
 
 ## Stable recovery behavior
+
+- 删除需要单独的 `sftp:delete`，先读取完整预览再启动任务。取消只停止后续步骤，不能恢复已删除文件；不确定结果和重启后禁止自动重放。完整流程见 [deletion.md](deletion.md)。
+- 单项重命名拒绝已有目标，并在审批后检查来源是否变化。遇到 `SFTP_RENAME_CONFLICT` 重新检查路径；遇到 `SFTP_RENAME_UNCERTAIN` 先查询原路径和目标路径，不自动重试。
 
 - Missing scope: ask the user to update the MCP client in Termous and reconnect it. Do not request a broader bearer token in chat.
 - Invalid or disabled token: stop; do not retry automatically.

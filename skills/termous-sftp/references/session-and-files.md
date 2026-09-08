@@ -1,5 +1,7 @@
 # Session and file workflows
 
+单项重命名保持现有 `files.rename` 接口，目标必须不存在；来源在审批等待期间变化时需要重新检查。单项、批量及递归删除使用独立的 [删除工作流](deletion.md)，不能替换成重命名或 Shell 命令。
+
 An Agent-level `TERMOUS_VERIFIED_RESOURCE` binds an interactive SSH Session only. Never use its `session_id` as `file_session_id`, derive a File Session from its SSH Profile, or bypass current-client ownership and generation checks. Resolve SFTP independently below.
 
 ## Resolve a host and create a file session

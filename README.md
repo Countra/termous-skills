@@ -25,7 +25,7 @@ The MCP client must support Streamable HTTP and client-token authentication. An 
 | [termous-remote-ops](skills/termous-remote-ops/SKILL.md) | Saved hosts, access profiles, SSH sessions, commands, output, and interruption | `hosts:read`, `hosts:probe`, `sessions:read`, `sessions:connect`, `sessions:close`, `commands:execute`, `commands:read`, `commands:interrupt` |
 | [termous-system-ops](skills/termous-system-ops/SKILL.md) | Inventory, processes, systemd, and Docker on a connected Linux session | `system:read`, `processes:read`, `processes:terminate`, `services:read`, `services:manage`, `docker:read`, `docker:manage` |
 | [termous-crontab](skills/termous-crontab/SKILL.md) | Structured jobs in the current SSH user's Crontab | `crontab:read`, `crontab:write` |
-| [termous-sftp](skills/termous-sftp/SKILL.md) | SFTP sessions, remote files, Linux file-name search, batch rename, uploads, downloads, and cross-host copies | `sftp:read`, `sftp:connect`, `sftp:close`, `sftp:write`, `sftp:transfer`, `sftp:cancel`, `sftp:batch_rename`, `sftp:file_search` |
+| [termous-sftp](skills/termous-sftp/SKILL.md) | SFTP sessions, remote files, Linux file-name search, batch rename, deletion, uploads, downloads, and cross-host copies | `sftp:read`, `sftp:connect`, `sftp:close`, `sftp:write`, `sftp:delete`, `sftp:transfer`, `sftp:cancel`, `sftp:batch_rename`, `sftp:file_search` |
 | [termous-port-forwarding](skills/termous-port-forwarding/SKILL.md) | Saved and inline local, remote, or dynamic forwarding | `forwarding:read`, `forwarding:manage` |
 | [termous-snippets](skills/termous-snippets/SKILL.md) | Saved command snippets and groups | `snippets:read`, `snippets:write` |
 
@@ -62,19 +62,22 @@ The default source is `../termous-skills/skills` and the default Core checkout i
 
 ## Maintaining MCP coverage
 
-`contracts/mcp-tools.json` mirrors only the stable Tool name, Scope, approval class, and primary Skill ownership. It intentionally does not duplicate Tool schemas or Backend DTOs. The current contract covers 76 Tools and 29 Scopes for MCP protocol `2025-11-25`; a client's visible tools depend on its granted scopes.
+`contracts/mcp-tools.json` mirrors only the stable Tool name, Scope, approval class, and primary Skill ownership. It intentionally does not duplicate Tool schemas or Backend DTOs. The current contract covers 81 Tools and 30 Scopes for MCP protocol `2025-11-25`; a client's visible tools depend on its granted scopes.
+
+SFTP 删除使用独立的 `sftp:delete` 权限，遵循完整预览、审批、异步执行和逐项结果查询；取消权限仍为 `sftp:cancel`。外部客户端的现有写权限不会自动扩大；内置 AI 托管客户端随 Core 启动自动同步全部能力，保留原审批策略。删除不会回滚，网络中断后的不确定结果不能自动重试。详见 [删除工作流](skills/termous-sftp/references/deletion.md)。
 
 Install development dependencies and validate the standalone repository:
 
 ```text
 python -m pip install -r requirements-dev.txt
-python scripts/validate_skills.py
+python -B scripts/validate_skills.py
+python -B -m unittest discover -s tests -p "test_*.py"
 ```
 
 When the Termous Backend is available in the adjacent workspace, also compare the contract with its Go registries, Scope constants, and MCP protocol version:
 
 ```text
-python scripts/validate_skills.py --backend-root ../backend
+python -B scripts/validate_skills.py --backend-root ../backend
 ```
 
 For every MCP Tool change:
