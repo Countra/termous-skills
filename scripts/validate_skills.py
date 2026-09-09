@@ -375,6 +375,7 @@ def validate_verified_resource_guidance(documents: dict[str, str], errors: list[
         "skip the entire Host/Profile/session discovery and connect branch",
         "Unbound discovery branch:",
         "only when no ready verified resource exists",
+        "只有 `kind=file_profile` 时，SSH 工具仍走普通发现流程",
     ):
         if required not in remote_ops:
             errors.append(
@@ -389,9 +390,19 @@ def validate_verified_resource_guidance(documents: dict[str, str], errors: list[
         )
 
     files = documents.get("termous-files", "")
-    for required in ("TERMOUS_VERIFIED_RESOURCE", "file_session_id", "connection_generation"):
+    for required in (
+        "TERMOUS_VERIFIED_RESOURCE", "kind=file_profile", "kind=ssh_session",
+        "file_access_profile_id", "file_session_id", "connection_generation",
+        "termous.files.sessions.list", "termous.files.sessions.connect",
+        "当前 MCP 客户端", "原桌面", "替换或解除引用",
+        "`file_access_profile_id`、`host_id`、`ssh_profile_id` 和 `engine` 全部匹配",
+        "不得重复连接",
+    ):
         if required not in files:
-            errors.append(f"termous-files: SSH binding boundary must document {required}")
+            errors.append(f"termous-files: 可信文件 profile 分支必须说明 {required}")
+    for obsolete in ("currently describes an interactive SSH Session", "binds an interactive SSH Session only"):
+        if obsolete in files:
+            errors.append("termous-files: 不得保留仅支持 SSH 可信引用的过期说明")
 
 
 def go_function_sections(source: str) -> dict[str, str]:

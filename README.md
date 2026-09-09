@@ -37,7 +37,7 @@ After changing a Termous MCP client's Scopes or approval-bypass setting, reconne
 
 A host can have several connection profiles, or no SSH connection at all. Discover its access profiles and choose the requested SSH or file profile; do not assume that every host supports SSH or that every session for a host uses the same account and route.
 
-When the built-in assistant supplies a ready, exact `TERMOUS_VERIFIED_RESOURCE` SSH binding, the applicable skills use that session directly. If it disconnects or becomes invalid, the user must rebind it in Termous; another session is not selected automatically. File workflows use their own MCP file sessions. A verified SSH binding does not grant additional permissions or remove approvals.
+内置助手可同时引用一个精确 SSH 会话和一个文件 profile，以两类 `TERMOUS_VERIFIED_RESOURCE` 提供可信路由。SSH 工具直接使用 `kind=ssh_session` 的会话，失效后由用户重新绑定。文件工具使用 `kind=file_profile` 的精确 `file_access_profile_id`，复用当前 MCP 客户端拥有的文件连接，没有可复用连接时按该配置创建自己的文件会话。原文件标签关闭或断开不影响 profile 引用；profile 删除或身份归属失效则需用户替换或解除。两类引用独立选路，不增加权限，也不移除审批与主机信任校验。
 
 ## Safety model
 

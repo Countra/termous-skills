@@ -3,6 +3,26 @@
   "cases": [
     {
       "kind": "direct",
+      "prompt": "Termous 当前只有 kind=file_profile 文件引用；请查找主机 A 的 SSH 配置并执行 uname -a，不要把文件引用当成终端会话。",
+      "expected_skills": ["termous-remote-ops"]
+    },
+    {
+      "kind": "direct",
+      "prompt": "Termous 系统已有 kind=file_profile 的精确可信引用 fap_prod；请读取 /srv/app/config.json，原文件标签已关闭，只使用 AI 自己的文件会话。",
+      "expected_skills": ["termous-files"]
+    },
+    {
+      "kind": "cross-domain",
+      "prompt": "Termous 同时引用主机 A 的 kind=ssh_session 与主机 B 的 kind=file_profile。请在 A 执行 uname -a，并通过文件连接列出 B 的 /srv，分别使用对应精确引用。",
+      "expected_skills": ["termous-remote-ops", "termous-files"]
+    },
+    {
+      "kind": "direct",
+      "prompt": "Termous 的可信文件 profile 已删除，请说明应替换或解除引用，不要改用默认文件配置。",
+      "expected_skills": ["termous-files"]
+    },
+    {
+      "kind": "direct",
       "prompt": "通过 Termous SFTP 预览 /srv/releases/old 的递归删除范围，确认后删除，并查询逐项结果。",
       "expected_skills": ["termous-files"]
     },

@@ -7,14 +7,19 @@ description: Use Termous MCP file sessions to browse or maintain remote files, s
 
 Use the Termous MCP server as the only interface to saved hosts, file sessions, remote files, and transfer tasks. Current file sessions use the SFTP engine; the file-management namespace does not grant local browsing or add other protocols. Never obtain credentials or open a separate SSH/SFTP connection outside Termous.
 
-## SSH binding boundary
+## 可信资源与文件引用
 
-`TERMOUS_VERIFIED_RESOURCE` currently describes an interactive SSH Session, not an SFTP File Session. Its `session_id` must never be passed as `file_session_id`, and it does not skip SFTP Host, file Profile, ownership, Session, or `connection_generation` resolution. Likewise, `source_context.entity_id`, `host_id`, and `ssh_profile_id` are not SFTP File Session IDs. Follow the normal SFTP workflow even when a verified SSH resource is present.
+系统上下文可同时包含两类 `TERMOUS_VERIFIED_RESOURCE`，必须按 `kind` 独立选路：
+
+- `kind=file_profile`、`binding_mode=exact`、`state=ready`：直接使用可信 `file_access_profile_id`，跳过主机及配置发现。调用 `termous.files.sessions.list`，只复用当前 MCP 客户端拥有、`file_access_profile_id`、`host_id`、`ssh_profile_id` 和 `engine` 全部匹配且就绪的文件会话；匹配会话仍在连接或等待主机信任时查询同一会话，不得重复连接。没有可复用连接时调用 `termous.files.sessions.connect`，只传精确 `file_access_profile_id` 和稳定的 `client_request_id`，并复核返回的配置身份。后续使用本客户端会话返回的 `file_session_id` 和最新 `connection_generation`。
+- `kind=ssh_session`：仅供终端及 SSH 工具使用，不能作为文件连接。只有 SSH 引用时，文件操作仍按普通文件发现流程；两类引用并存时，文件工具选择文件 profile，即使两个引用属于不同主机。
+
+原桌面文件标签的 `file_session_id` 从不作为 AI 的操作目标；标签关闭、断开、重连不使 profile 引用失效。profile 删除或主机、SSH 配置、引擎关联失效时停止操作，提示用户在界面替换或解除引用，不得自动选择默认配置或同主机其他配置。`source_context.entity_id`、`host_id`、`ssh_profile_id` 和终端 `session_id` 都不是文件会话 ID。文件引用不改变权限、审批、主机信任、当前客户端所有权和连接代次校验。
 
 ## Core workflow
 
 1. Inspect the tools advertised by the current MCP connection. If a required tool is absent, report its corresponding scope instead of substituting another interface. Host discovery uses `hosts:read`; SFTP session queries and file reads use `files:read`, connect/reconnect uses `files:connect`, close uses `files:close`, file writes use `files:write`, deletion preview/start/status/result uses `files:delete`, transfer start/get uses `files:transfer`, batch-rename presets/preview/start/status/result use `files:batch_rename`, Linux file-name capability/search uses `files:search`, and cancellation uses `files:cancel`.
-2. Call `termous.hosts.list` to resolve one exact saved `host_id`, then call `termous.hosts.access_profiles.list` for its sanitized access catalog. Select the default file Profile when the user chose only the Host, or one exact `file_access_profile_id` when the user chose a particular file Profile. Resolve ambiguous names with the user.
+2. 有可信 `kind=file_profile` 时采用上述精确 profile 分支，并从第 3 步继续。否则调用 `termous.hosts.list` 解析主机，再调用 `termous.hosts.access_profiles.list` 获取脱敏目录；用户只选择主机时用默认文件配置，指定配置时解析精确 `file_access_profile_id`，名称有歧义时先澄清。
 3. Call `termous.files.sessions.list`. Reuse or poll a session only when its actual `file_access_profile_id` matches the selected file Profile; a matching `host_id` or `ssh_profile_id` alone is insufficient.
 4. Call `termous.files.sessions.connect` with one stable `client_request_id` only when no matching current-client session exists. Send exactly one selector: `host_id` means the category default, while `file_access_profile_id` means that exact Profile. Never send both or reinterpret one ID type as another.
 5. Poll `termous.files.sessions.get` until the selected session is connected and ready. Ask before reconnecting a failed or disconnected session, and direct Host Key trust decisions to Termous.

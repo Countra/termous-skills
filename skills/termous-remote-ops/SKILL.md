@@ -15,6 +15,8 @@ Never reinterpret `source_context.entity_id`, `host_id`, or `ssh_profile_id` as 
 
 ## Core workflow
 
+以下绑定分支仅识别 `kind=ssh_session`。只有 `kind=file_profile` 时，SSH 工具仍走普通发现流程，不得从文件引用推导终端会话；两类同时存在时独立选路，可能指向不同主机。
+
 Choose exactly one routing branch before using a Session:
 
 - **Verified binding branch:** when a ready exact binding is present, take its `session_id` as the final target and skip the entire Host/Profile/session discovery and connect branch. Continue directly with the requested session operation.
