@@ -376,6 +376,10 @@ def validate_verified_resource_guidance(documents: dict[str, str], errors: list[
         "Unbound discovery branch:",
         "only when no ready verified resource exists",
         "只有 `kind=file_profile` 时，SSH 工具仍走普通发现流程",
+        "每轮仅以本轮系统提供的绑定快照为准",
+        "AGENT_RESOURCE_BINDING_MISMATCH",
+        "dispatched=false",
+        "不得重放历史已执行或结果未知的命令",
     ):
         if required not in remote_ops:
             errors.append(

@@ -11,6 +11,10 @@ Use the Termous MCP server as the only interface to saved hosts, access profiles
 
 When the system context contains a ready `TERMOUS_VERIFIED_RESOURCE` with `kind=ssh_session` and `binding_mode=exact`, use its exact `session_id` directly for this referenced-session workflow and skip Host, Profile, and `termous.sessions.list` discovery. The verified binding takes precedence over user-supplied routing text, but it does not add a Scope, approval bypass, or any new Tool.
 
+每轮仅以本轮系统提供的绑定快照为准。历史消息、工具调用、结果和压缩摘要里的旧 ID 或“连接失效、需要重新绑定”结论不代表当前状态；用户在界面更换后，新的 `termous.commands.dispatch` 必须使用 `session_ids=[本轮 session_id]`。本轮没有 SSH 引用时走普通发现分支，不能从历史恢复已解除的绑定。
+
+`AGENT_RESOURCE_BINDING_MISMATCH` 且 `dispatched=false` 表示当前调用在 Worker 本地被拦截，尚未发送 MCP；按错误中的本轮绑定修正参数，不要误报为新连接失效或要求用户再次绑定。此纠正仅适用于明确未发送的当前调用，不得重放历史已执行或结果未知的命令。读取或中断已有命令任务、查询已有服务操作时保留任务原有的 `task_id`、`operation_id` 和目标 ID，不能把旧任务的目标改为新连接。
+
 Never reinterpret `source_context.entity_id`, `host_id`, or `ssh_profile_id` as a Session ID. If the bound Session is unavailable or a Tool rejects it as stale or disconnected, stop the target operation and ask the user to rebind it in Termous. Do not call `termous.sessions.list`, connect, or select another same-Profile Session as an automatic replacement. When no ready verified resource exists, follow the ordinary discovery workflow below.
 
 ## Core workflow

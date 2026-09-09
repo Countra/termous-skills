@@ -6,6 +6,8 @@ If the system context supplies a ready exact `TERMOUS_VERIFIED_RESOURCE` for `ki
 
 If that exact Session becomes unavailable, stop rather than discovering, connecting, or substituting another Session. The user must rebind the Agent conversation in Termous before target work resumes.
 
+界面已替换绑定后，下轮系统快照中的新 `session_id` 覆盖历史路由结论；无需用户在聊天中手写新 ID。Worker 的 `AGENT_RESOURCE_BINDING_MISMATCH`、`dispatched=false` 是执行前参数错误，可使用返回的本轮目标纠正当前调用；只有本轮精确目标实际不可用时才需要再次替换或解除引用。保留命令正文，不重放此前已发送、已执行或结果未知的命令。`commands.read_output`、`commands.interrupt` 及服务操作查询继续使用其任务原有身份，不重定向历史任务。
+
 ## Host, access Profile, and session discovery
 
 1. Call `termous.hosts.list` and match user-provided names, tags, or endpoints to one exact `host_id`.

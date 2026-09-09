@@ -3,6 +3,16 @@
   "cases": [
     {
       "kind": "direct",
+      "prompt": "Termous 已把 SSH 引用从 ses_old 更换为本轮可信绑定 ses_new，请执行 ls /root；历史摘要里仍然有旧连接失效的信息，不要继续用旧 ID。",
+      "expected_skills": ["termous-remote-ops"]
+    },
+    {
+      "kind": "direct",
+      "prompt": "Termous Worker 返回 AGENT_RESOURCE_BINDING_MISMATCH 且 dispatched=false，当前命令尚未发出，请按本轮绑定纠正参数，不要重放历史命令。",
+      "expected_skills": ["termous-remote-ops"]
+    },
+    {
+      "kind": "direct",
       "prompt": "Termous 当前只有 kind=file_profile 文件引用；请查找主机 A 的 SSH 配置并执行 uname -a，不要把文件引用当成终端会话。",
       "expected_skills": ["termous-remote-ops"]
     },
