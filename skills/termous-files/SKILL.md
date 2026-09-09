@@ -1,11 +1,11 @@
 ---
-name: termous-sftp
-description: Use Termous MCP SFTP sessions to browse or maintain files on saved SSH hosts, search Linux file names with fd, perform previewed batch renames or deletions, transfer files between local and remote systems, copy between remote hosts, or inspect and cancel file tasks. Trigger only for Termous-managed SFTP work; do not use for local-only files, HTTP/S3 transfers, SCP, or an exact shell command.
+name: termous-files
+description: Use Termous MCP file sessions to browse or maintain remote files, search Linux file names with fd, preview batch renames or deletions, transfer files between local and remote systems, copy between remote hosts, or inspect and cancel file tasks. Current remote file sessions use SFTP. Trigger only for Termous file management; do not use for local-only files, HTTP/S3 transfers, SCP, or an exact shell command.
 ---
 
-# Termous SFTP
+# Termous Files
 
-Use the Termous MCP server as the only interface to saved hosts, SFTP file sessions, remote files, and transfer tasks. Never obtain credentials or open a separate SSH/SFTP connection outside Termous.
+Use the Termous MCP server as the only interface to saved hosts, file sessions, remote files, and transfer tasks. Current file sessions use the SFTP engine; the file-management namespace does not grant local browsing or add other protocols. Never obtain credentials or open a separate SSH/SFTP connection outside Termous.
 
 ## SSH binding boundary
 
@@ -13,22 +13,22 @@ Use the Termous MCP server as the only interface to saved hosts, SFTP file sessi
 
 ## Core workflow
 
-1. Inspect the tools advertised by the current MCP connection. If a required tool is absent, report its corresponding scope instead of substituting another interface. Host discovery uses `hosts:read`; SFTP session queries and file reads use `sftp:read`, connect/reconnect uses `sftp:connect`, close uses `sftp:close`, file writes use `sftp:write`, deletion preview/start/status/result uses `sftp:delete`, transfer start/get uses `sftp:transfer`, batch-rename presets/preview/start/status/result use `sftp:batch_rename`, Linux file-name capability/search uses `sftp:file_search`, and cancellation uses `sftp:cancel`.
+1. Inspect the tools advertised by the current MCP connection. If a required tool is absent, report its corresponding scope instead of substituting another interface. Host discovery uses `hosts:read`; SFTP session queries and file reads use `files:read`, connect/reconnect uses `files:connect`, close uses `files:close`, file writes use `files:write`, deletion preview/start/status/result uses `files:delete`, transfer start/get uses `files:transfer`, batch-rename presets/preview/start/status/result use `files:batch_rename`, Linux file-name capability/search uses `files:search`, and cancellation uses `files:cancel`.
 2. Call `termous.hosts.list` to resolve one exact saved `host_id`, then call `termous.hosts.access_profiles.list` for its sanitized access catalog. Select the default file Profile when the user chose only the Host, or one exact `file_access_profile_id` when the user chose a particular file Profile. Resolve ambiguous names with the user.
-3. Call `termous.sftp.sessions.list`. Reuse or poll a session only when its actual `file_access_profile_id` matches the selected file Profile; a matching `host_id` or `ssh_profile_id` alone is insufficient.
-4. Call `termous.sftp.sessions.connect` with one stable `client_request_id` only when no matching current-client session exists. Send exactly one selector: `host_id` means the category default, while `file_access_profile_id` means that exact Profile. Never send both or reinterpret one ID type as another.
-5. Poll `termous.sftp.sessions.get` until the selected session is connected and ready. Ask before reconnecting a failed or disconnected session, and direct Host Key trust decisions to Termous.
+3. Call `termous.files.sessions.list`. Reuse or poll a session only when its actual `file_access_profile_id` matches the selected file Profile; a matching `host_id` or `ssh_profile_id` alone is insufficient.
+4. Call `termous.files.sessions.connect` with one stable `client_request_id` only when no matching current-client session exists. Send exactly one selector: `host_id` means the category default, while `file_access_profile_id` means that exact Profile. Never send both or reinterpret one ID type as another.
+5. Poll `termous.files.sessions.get` until the selected session is connected and ready. Ask before reconnecting a failed or disconnected session, and direct Host Key trust decisions to Termous.
 6. Preserve the returned `session.id`, `file_access_profile_id`, bound `ssh_profile_id`, `engine`, `namespace`, capabilities, and `connection_generation`. For single-session file operations and upload/download, pass the ID and generation as `file_session_id` and `expected_connection_generation`. For remote copy, use the source/target fields defined by that tool; never guess or reuse a stale generation.
 7. Use `list`, `stat`, and `read_text` for ordinary read-only work. For Linux file-name search, always check the dedicated capability first and follow its focused workflow. For a batch rename, use the dedicated preview and task workflow; never loop over `files.rename` or synthesize shell commands. Before a file write, state the affected path and content or mode summary. Before a transfer, state the complete source, destination, and overwrite policy.
 8. Call the requested write or transfer tool once with a stable `client_request_id`. Termous requests native approval unless the client is explicitly configured to skip approvals. A rejected, expired, or cancelled approval means the operation did not start; never infer the configured policy from a successful result.
-9. For transfers, retain the returned `transfer.id` and, when `termous.sftp.transfers.get` is available, pass it as `transfer_id` until a final state. Report skipped items, partial results, the failure side, and progress honestly. The same MCP-managed task is visible in Termous Desktop and may be cancelled or removed there by the user.
-10. Call `termous.sftp.transfers.cancel` only when the user explicitly asks to cancel. Treat acceptance as a cancellation request. Continue polling only when `termous.sftp.transfers.get` is available; otherwise report that final-state inspection requires `sftp:transfer`.
+9. For transfers, retain the returned `transfer.id` and, when `termous.files.transfers.get` is available, pass it as `transfer_id` until a final state. Report skipped items, partial results, the failure side, and progress honestly. The same MCP-managed task is visible in Termous Desktop and may be cancelled or removed there by the user.
+10. Call `termous.files.transfers.cancel` only when the user explicitly asks to cancel. Treat acceptance as a cancellation request. Continue polling only when `termous.files.transfers.get` is available; otherwise report that final-state inspection requires `files:transfer`.
 
 For session and ordinary file call sequences, read [references/session-and-files.md](references/session-and-files.md). For Linux-wide or directory-scoped file-name search, capability states, and advanced filters, read [references/file-name-search.md](references/file-name-search.md). For reusable rules, preview, execution, results, and rollback behavior, read [references/batch-rename.md](references/batch-rename.md). For upload, download, remote copy, and task polling, read [references/transfers.md](references/transfers.md). For approval, path, privacy, and error rules, read [references/safety-and-errors.md](references/safety-and-errors.md).
 
 ## Non-negotiable boundaries
 
-删除必须遵循 [references/deletion.md](references/deletion.md) 的完整预览、审批、任务和结果流程。预览、启动、状态及结果需要独立的 `sftp:delete`，取消仍使用 `sftp:cancel`。现有 `sftp:write` 不自动取得删除权限。
+删除必须遵循 [references/deletion.md](references/deletion.md) 的完整预览、审批、任务和结果流程。预览、启动、状态及结果需要独立的 `files:delete`，取消仍使用 `files:cancel`。现有 `files:write` 不自动取得删除权限。
 
 - Manage only SFTP file sessions and transfer tasks visible to the current MCP client. Termous Desktop is a trusted management surface and may display or close MCP file sessions and display, cancel, or remove MCP transfer tasks without making them visible to another MCP client. Do not use interactive SSH session IDs as SFTP file session IDs.
 - Treat a Host as an asset and a file Profile as the exact access route. Match and reuse sessions by `file_access_profile_id`, not merely by Host or bound SSH Profile.

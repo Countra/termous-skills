@@ -3,7 +3,7 @@
 ## Common preparation
 
 1. Resolve every source and target to an exact MCP-owned `file_session_id`.
-2. Refresh each file session with `termous.sftp.sessions.get` immediately before requesting the transfer and retain its current `connection_generation`.
+2. Refresh each file session with `termous.files.sessions.get` immediately before requesting the transfer and retain its current `connection_generation`.
 3. For downloads and remote copies, inspect every remote source with `stat`. Upload sources are Core-local paths and are validated by Termous during grant creation and again immediately before execution; do not try to inspect them with an SFTP tool.
 4. Choose one explicit overwrite policy:
    - `rename`: preserve existing items by selecting a new target name;
@@ -14,7 +14,7 @@
 
 ## Upload local files
 
-Use `termous.sftp.transfers.upload` to copy local files or directories from the machine running Termous Core to one remote file session.
+Use `termous.files.transfers.upload` to copy local files or directories from the machine running Termous Core to one remote file session.
 
 1. Confirm that every local path is absolute and is exactly what the user requested.
 2. Explain that these paths refer to the Termous Core machine. Do not silently reinterpret paths from the MCP client's machine.
@@ -24,7 +24,7 @@ Use `termous.sftp.transfers.upload` to copy local files or directories from the 
 
 ## Download remote files
 
-Use `termous.sftp.transfers.download` to copy remote files or directories to an existing directory on the machine running Termous Core.
+Use `termous.files.transfers.download` to copy remote files or directories to an existing directory on the machine running Termous Core.
 
 1. Inspect the exact remote source paths and reject symlinks or special files.
 2. Confirm the absolute local destination directory with the user.
@@ -34,7 +34,7 @@ Use `termous.sftp.transfers.download` to copy remote files or directories to an 
 
 ## Copy between remote hosts
 
-Use `termous.sftp.transfers.remote_copy` to stream files through Termous Core from one remote host to another.
+Use `termous.files.transfers.remote_copy` to stream files through Termous Core from one remote host to another.
 
 1. Use two connected MCP-owned file sessions whose `host_id` values are different.
 2. Pass the source identity as `source_file_session_id` and `source_connection_generation`, and the target identity as `target_file_session_id` and `target_connection_generation`.
@@ -44,7 +44,7 @@ Use `termous.sftp.transfers.remote_copy` to stream files through Termous Core fr
 
 ## Poll and report a task
 
-1. Retain the returned `transfer.id` and pass it as `transfer_id` to `termous.sftp.transfers.get` using the same MCP client.
+1. Retain the returned `transfer.id` and pass it as `transfer_id` to `termous.files.transfers.get` using the same MCP client.
 2. The task is also visible in the Termous Desktop transfer list with an MCP origin marker. The user may cancel or remove it there; another MCP client still cannot inspect or control it.
 3. Poll while status is queued or running. Use `phase`, byte counts, file counts, speed, ETA, and current file only as reported.
 4. Stop when status is completed, failed, or cancelled. If the owning MCP client receives not found after the task was visible, it may have been removed in Desktop; do not recreate it automatically.
@@ -59,6 +59,6 @@ Use `termous.sftp.transfers.remote_copy` to stream files through Termous Core fr
 ## Cancel a task
 
 1. Confirm the exact task with the user.
-2. Call `termous.sftp.transfers.cancel` once.
-3. Treat acceptance only as a cancellation request. If `transfers.get` is available, continue polling until the task reaches a final state; otherwise state that final-state inspection requires the separate `sftp:transfer` scope.
+2. Call `termous.files.transfers.cancel` once.
+3. Treat acceptance only as a cancellation request. If `transfers.get` is available, continue polling until the task reaches a final state; otherwise state that final-state inspection requires the separate `files:transfer` scope.
 4. Never start another transfer automatically after cancellation or failure. MCP-created transfers are intentionally not retryable; a new attempt requires a new user decision and must pass through the configured Termous approval policy.

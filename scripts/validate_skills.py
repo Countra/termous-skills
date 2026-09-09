@@ -35,7 +35,7 @@ TOP_LEVEL_FUNCTION_PATTERN = re.compile(
 ALLOWED_FRONTMATTER = {"name", "description", "license", "allowed-tools", "metadata"}
 ALLOWED_APPROVALS = {"none", "per-call"}
 ROUTING_KINDS = {"direct", "cross-domain", "ambiguous", "negative"}
-EXPECTED_CONTRACT_VERSION = 1
+EXPECTED_CONTRACT_VERSION = 2
 EXPECTED_SKILL_COUNT = 6
 EXPECTED_TOOL_COUNT = 81
 EXPECTED_SCOPE_COUNT = 30
@@ -49,6 +49,45 @@ APPENDED_TOOL_CONTRACT = (
     ("termous.sftp.files.delete.result", "termous-sftp", "sftp:delete", "none"),
     ("termous.sftp.files.delete.cancel", "termous-sftp", "sftp:cancel", "none"),
 )
+# v1 基准固定保留；仅允许这 31 项改名，其他工具、顺序、权限和审批策略不得改变。
+FILE_TOOL_RENAMES = {
+    "termous.sftp.sessions.list": "termous.files.sessions.list",
+    "termous.sftp.sessions.get": "termous.files.sessions.get",
+    "termous.sftp.sessions.connect": "termous.files.sessions.connect",
+    "termous.sftp.sessions.reconnect": "termous.files.sessions.reconnect",
+    "termous.sftp.sessions.close": "termous.files.sessions.close",
+    "termous.sftp.files.list": "termous.files.list",
+    "termous.sftp.files.stat": "termous.files.stat",
+    "termous.sftp.files.read_text": "termous.files.read_text",
+    "termous.sftp.files.save_text": "termous.files.save_text",
+    "termous.sftp.files.mkdir": "termous.files.mkdir",
+    "termous.sftp.files.rename": "termous.files.rename",
+    "termous.sftp.files.chmod": "termous.files.chmod",
+    "termous.sftp.transfers.upload": "termous.files.transfers.upload",
+    "termous.sftp.transfers.download": "termous.files.transfers.download",
+    "termous.sftp.transfers.remote_copy": "termous.files.transfers.remote_copy",
+    "termous.sftp.transfers.get": "termous.files.transfers.get",
+    "termous.sftp.transfers.cancel": "termous.files.transfers.cancel",
+    "termous.sftp.files.batch_rename.presets.list": "termous.files.batch_rename.presets.list",
+    "termous.sftp.files.batch_rename.presets.get": "termous.files.batch_rename.presets.get",
+    "termous.sftp.files.batch_rename.preview": "termous.files.batch_rename.preview",
+    "termous.sftp.files.batch_rename.start": "termous.files.batch_rename.start",
+    "termous.sftp.files.batch_rename.get": "termous.files.batch_rename.get",
+    "termous.sftp.files.batch_rename.result": "termous.files.batch_rename.result",
+    "termous.sftp.files.batch_rename.cancel": "termous.files.batch_rename.cancel",
+    "termous.sftp.files.name_search.capability": "termous.files.name_search.capability",
+    "termous.sftp.files.name_search.run": "termous.files.name_search.run",
+    "termous.sftp.files.delete.preview": "termous.files.delete.preview",
+    "termous.sftp.files.delete.start": "termous.files.delete.start",
+    "termous.sftp.files.delete.get": "termous.files.delete.get",
+    "termous.sftp.files.delete.result": "termous.files.delete.result",
+    "termous.sftp.files.delete.cancel": "termous.files.delete.cancel",
+}
+FILE_SCOPE_RENAMES = {
+    "sftp:read": "files:read", "sftp:connect": "files:connect", "sftp:close": "files:close",
+    "sftp:write": "files:write", "sftp:delete": "files:delete", "sftp:transfer": "files:transfer",
+    "sftp:cancel": "files:cancel", "sftp:batch_rename": "files:batch_rename", "sftp:file_search": "files:search",
+}
 VERIFIED_SSH_RESOURCE_SKILLS = {
     "termous-crontab",
     "termous-port-forwarding",
@@ -123,12 +162,15 @@ def validate_contract(errors: list[str]) -> tuple[dict[str, object], set[str], s
         errors.append("contracts/mcp-tools.json: tool_count does not match tools")
     if len(scopes) != EXPECTED_SCOPE_COUNT:
         errors.append(f"contracts/mcp-tools.json: expected {EXPECTED_SCOPE_COUNT} Scopes, found {len(scopes)}")
+    if not set(FILE_SCOPE_RENAMES.values()).issubset(scope_set) or scope_set.intersection(FILE_SCOPE_RENAMES):
+        errors.append("contracts/mcp-tools.json: all 9 file Scopes must use their current names")
     if len(tools) != EXPECTED_TOOL_COUNT:
         errors.append(f"contracts/mcp-tools.json: expected {EXPECTED_TOOL_COUNT} Tools, found {len(tools)}")
 
+    baseline_tools = project_v1_contract(tools, errors)
     legacy_rows = [
         f"{tool.get('name')}\t{tool.get('skill')}\t{tool.get('scope')}\t{tool.get('approval')}"
-        for tool in tools[:LEGACY_TOOL_COUNT]
+        for tool in baseline_tools[:LEGACY_TOOL_COUNT]
     ]
     legacy_digest = hashlib.sha256("\n".join(legacy_rows).encode("utf-8")).hexdigest()
     if len(tools) >= LEGACY_TOOL_COUNT and legacy_digest != LEGACY_TOOL_CONTRACT_SHA256:
@@ -140,7 +182,7 @@ def validate_contract(errors: list[str]) -> tuple[dict[str, object], set[str], s
             tool.get("scope"),
             tool.get("approval"),
         )
-        for tool in tools[LEGACY_TOOL_COUNT:]
+        for tool in baseline_tools[LEGACY_TOOL_COUNT:]
         if isinstance(tool, dict)
     )
     if appended_contract != APPENDED_TOOL_CONTRACT:
@@ -177,6 +219,31 @@ def validate_contract(errors: list[str]) -> tuple[dict[str, object], set[str], s
     if unused_scopes:
         errors.append(f"contracts/mcp-tools.json: unused Scopes: {', '.join(unused_scopes)}")
     return contract, set(names), owners
+
+
+def project_v1_contract(tools: list[dict[str, object]], errors: list[str]) -> list[dict[str, object]]:
+    old_names = {new: old for old, new in FILE_TOOL_RENAMES.items()}
+    old_scopes = {new: old for old, new in FILE_SCOPE_RENAMES.items()}
+    current_names = [tool.get("name") for tool in tools]
+    if len(old_names) != 31 or any(current_names.count(name) != 1 for name in old_names):
+        errors.append("contracts/mcp-tools.json: all 31 renamed file Tools must appear exactly once")
+    if any(name in FILE_TOOL_RENAMES for name in current_names if isinstance(name, str)):
+        errors.append("contracts/mcp-tools.json: legacy external file Tool names are not supported")
+    projected = []
+    for tool in tools:
+        row = dict(tool)
+        name = row.get("name")
+        if isinstance(name, str) and name in old_names:
+            scope = row.get("scope")
+            if row.get("skill") != "termous-files" or not isinstance(scope, str) or scope not in old_scopes:
+                errors.append(f"contracts/mcp-tools.json: renamed file Tool has legacy owner or Scope: {name}")
+            row["name"] = old_names[name]
+            if row.get("skill") == "termous-files":
+                row["skill"] = "termous-sftp"
+            if isinstance(scope, str):
+                row["scope"] = old_scopes.get(scope, scope)
+        projected.append(row)
+    return projected
 
 
 def validate_links(skill_dir: Path, errors: list[str]) -> None:
@@ -321,10 +388,10 @@ def validate_verified_resource_guidance(documents: dict[str, str], errors: list[
             "termous-system-ops: stale bindings must require UI rebind rather than session restore"
         )
 
-    sftp = documents.get("termous-sftp", "")
+    files = documents.get("termous-files", "")
     for required in ("TERMOUS_VERIFIED_RESOURCE", "file_session_id", "connection_generation"):
-        if required not in sftp:
-            errors.append(f"termous-sftp: SSH binding boundary must document {required}")
+        if required not in files:
+            errors.append(f"termous-files: SSH binding boundary must document {required}")
 
 
 def go_function_sections(source: str) -> dict[str, str]:

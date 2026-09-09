@@ -41,7 +41,7 @@
 
 ## Stable recovery behavior
 
-- 删除需要单独的 `sftp:delete`，先读取完整预览再启动任务。取消只停止后续步骤，不能恢复已删除文件；不确定结果和重启后禁止自动重放。完整流程见 [deletion.md](deletion.md)。
+- 删除需要单独的 `files:delete`，先读取完整预览再启动任务。取消只停止后续步骤，不能恢复已删除文件；不确定结果和重启后禁止自动重放。完整流程见 [deletion.md](deletion.md)。
 - 单项重命名拒绝已有目标，并在审批后检查来源是否变化。遇到 `SFTP_RENAME_CONFLICT` 重新检查路径；遇到 `SFTP_RENAME_UNCERTAIN` 先查询原路径和目标路径，不自动重试。
 
 - Missing scope: ask the user to update the MCP client in Termous and reconnect it. Do not request a broader bearer token in chat.

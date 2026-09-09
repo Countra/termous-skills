@@ -37,7 +37,7 @@ Use the focused Skill when the request is primarily one of these domains:
 
 - `$termous-system-ops`: inventory, processes, systemd, or Docker.
 - `$termous-crontab`: structured jobs for the current SSH user's Crontab.
-- `$termous-sftp`: SFTP sessions, remote files, and file transfers.
+- `$termous-files`: SFTP sessions, remote files, and file transfers.
 - `$termous-port-forwarding`: SSH local, remote, or dynamic forwarding.
 - `$termous-snippets`: saved command groups and snippets. Execute a snippet only through `termous.commands.dispatch`.
 

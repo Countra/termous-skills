@@ -17,31 +17,31 @@ class BackendRegistryTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
             registry = root / "internal/api/mcp"
-            (registry / "sftp").mkdir(parents=True)
+            (registry / "files").mkdir(parents=True)
             model = root / "internal/model/mcpaccess"
             model.mkdir(parents=True)
             (model / "types.go").write_text(
-                'ScopeSFTPDelete Scope = "sftp:delete"\nProtocolVersion = "2025-11-25"\n', encoding="utf-8"
+                'ScopeFilesDelete Scope = "files:delete"\nProtocolVersion = "2025-11-25"\n', encoding="utf-8"
             )
             (registry / "handler.go").write_text("package mcpapi\n", encoding="utf-8")
             (registry / "registry.go").write_text(
-                'import (\n\tsftpapi "termous/backend/internal/api/mcp/sftp"\n)\n'
-                'func registerTools() {\n\tsftpapi.RegisterDelete()\n}\n', encoding="utf-8"
+                'import (\n\tfilesapi "termous/backend/internal/api/mcp/files"\n)\n'
+                'func registerTools() {\n\tfilesapi.RegisterDelete()\n}\n', encoding="utf-8"
             )
-            split = registry / "sftp/delete_registry.go"
+            split = registry / "files/delete_registry.go"
             source = (
-                'func RegisterDelete() {\n\tif principal.HasScope(mcpaccessmodel.ScopeSFTPDelete) {\n'
-                '\t\tName: "termous.sftp.files.delete.preview"\n\t}\n}\n'
+                'func RegisterDelete() {\n\tif principal.HasScope(mcpaccessmodel.ScopeFilesDelete) {\n'
+                '\t\tName: "termous.files.delete.preview"\n\t}\n}\n'
             )
             split.write_text(source, encoding="utf-8")
-            tool = "termous.sftp.files.delete.preview"
-            contract = {"scopes": ["sftp:delete"], "tools": [{"name": tool, "scope": "sftp:delete"}],
+            tool = "termous.files.delete.preview"
+            contract = {"scopes": ["files:delete"], "tools": [{"name": tool, "scope": "files:delete"}],
                         "mcp_protocol_version": "2025-11-25"}
             errors = []
             validator.validate_backend(root, contract, {tool}, errors)
             self.assertEqual(errors, [])
 
-            (registry / "sftp/duplicate_registry.go").write_text(source, encoding="utf-8")
+            (registry / "files/duplicate_registry.go").write_text(source, encoding="utf-8")
             errors = []
             validator.validate_backend(root, contract, {tool}, errors)
             self.assertTrue(any("defined more than once" in error for error in errors), errors)

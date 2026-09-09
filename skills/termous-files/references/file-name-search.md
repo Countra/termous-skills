@@ -4,9 +4,9 @@ Use this workflow only for file-name search through a ready, current-client Term
 
 ## Required capability check
 
-1. Obtain the latest `file_session_id` and nonzero `connection_generation` from `termous.sftp.sessions.get`.
-2. Call `termous.sftp.files.name_search.capability` with that generation before every logical search workflow.
-3. Continue to `termous.sftp.files.name_search.run` only when `status=ready`.
+1. Obtain the latest `file_session_id` and nonzero `connection_generation` from `termous.files.sessions.get`.
+2. Call `termous.files.name_search.capability` with that generation before every logical search workflow.
+3. Continue to `termous.files.name_search.run` only when `status=ready`.
 
 Handle every capability status explicitly:
 
@@ -17,11 +17,11 @@ Handle every capability status explicitly:
 
 The MCP capability result deliberately contains no package manager, privilege, install plan, or command. There is no MCP installation Tool. Never call `commands.dispatch` to install or upgrade `fd`, and never fall back to `find`, `locate`, or an ad hoc Shell invocation. Host Key trust must still be resolved in Termous.
 
-Capability and search are read-only and do not use `client_request_id` or per-call approval. They still require the dedicated `sftp:file_search` Scope; approval bypass neither grants that Scope nor makes another client's file session visible.
+Capability and search are read-only and do not use `client_request_id` or per-call approval. They still require the dedicated `files:search` Scope; approval bypass neither grants that Scope nor makes another client's file session visible.
 
 ## Search request
 
-Call `termous.sftp.files.name_search.run` with the same `file_session_id` and latest `expected_connection_generation`. The Tool rechecks capability immediately before searching, so a prior `ready` result does not override a later unavailable state.
+Call `termous.files.name_search.run` with the same `file_session_id` and latest `expected_connection_generation`. The Tool rechecks capability immediately before searching, so a prior `ready` result does not override a later unavailable state.
 
 Choose filters deliberately:
 
@@ -68,7 +68,7 @@ The MCP projection has a 256 KiB structured-result budget. It preserves a comple
 
 ## Recovery
 
-- Missing `sftp:file_search`: ask the user to grant that exact Scope and reconnect the MCP client. `sftp:read` does not imply whole-host name search.
+- Missing `files:search`: ask the user to grant that exact Scope and reconnect the MCP client. `files:read` does not imply whole-host name search.
 - Stale generation or missing file session: re-list current-client SFTP sessions and repeat capability detection with the new generation. Do not substitute an interactive SSH session ID.
 - `SFTP_FILE_SEARCH_UNAVAILABLE`: stop and run capability again. If it is non-ready, direct the user to manual or Termous installation; do not install through MCP.
 - `SFTP_FILE_SEARCH_BUSY`: wait for the existing host operation to finish, then ask before rerunning a broad scan.

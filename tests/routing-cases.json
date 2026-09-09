@@ -4,12 +4,12 @@
     {
       "kind": "direct",
       "prompt": "通过 Termous SFTP 预览 /srv/releases/old 的递归删除范围，确认后删除，并查询逐项结果。",
-      "expected_skills": ["termous-sftp"]
+      "expected_skills": ["termous-files"]
     },
     {
       "kind": "direct",
       "prompt": "Cancel my Termous SFTP deletion task and report which files were already removed and which outcomes remain uncertain.",
-      "expected_skills": ["termous-sftp"]
+      "expected_skills": ["termous-files"]
     },
     {
       "kind": "direct",
@@ -54,27 +54,27 @@
     {
       "kind": "direct",
       "prompt": "Upload C:\\release\\app.zip from the Termous Core machine to /srv/releases using rename-on-conflict.",
-      "expected_skills": ["termous-sftp"]
+      "expected_skills": ["termous-files"]
     },
     {
       "kind": "direct",
       "prompt": "Connect a Termous SFTP session through the non-default file access profile named deploy-files, then list /srv/releases.",
-      "expected_skills": ["termous-sftp"]
+      "expected_skills": ["termous-files"]
     },
     {
       "kind": "direct",
       "prompt": "通过 Termous SFTP 将一台远端主机的目录复制到另一台主机，并持续报告传输进度。",
-      "expected_skills": ["termous-sftp"]
+      "expected_skills": ["termous-files"]
     },
     {
       "kind": "direct",
       "prompt": "Use a saved Termous rename preset to preview a regex batch rename in /srv/releases, show every changed mapping, then start it after approval and page through the final result.",
-      "expected_skills": ["termous-sftp"]
+      "expected_skills": ["termous-files"]
     },
     {
       "kind": "direct",
       "prompt": "Use the Termous SFTP file session to check fd capability, then search the connected Linux host for PDF file names under /srv without using a shell fallback.",
-      "expected_skills": ["termous-sftp"]
+      "expected_skills": ["termous-files"]
     },
     {
       "kind": "direct",
@@ -114,7 +114,7 @@
     {
       "kind": "cross-domain",
       "prompt": "Read a saved deployment snippet, upload its referenced package through Termous SFTP, then execute the exact saved command.",
-      "expected_skills": ["termous-snippets", "termous-sftp", "termous-remote-ops"]
+      "expected_skills": ["termous-snippets", "termous-files", "termous-remote-ops"]
     },
     {
       "kind": "direct",
@@ -139,7 +139,7 @@
     {
       "kind": "direct",
       "prompt": "Although this Agent references an SSH session, create a separate Termous SFTP file session and list /srv/releases.",
-      "expected_skills": ["termous-sftp"]
+      "expected_skills": ["termous-files"]
     },
     {
       "kind": "direct",

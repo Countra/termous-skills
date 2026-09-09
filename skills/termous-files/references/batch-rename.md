@@ -4,17 +4,17 @@ Use the dedicated batch-rename tools for multiple entries in one remote director
 
 ## Scope and tools
 
-`sftp:batch_rename` is a separate, default-off permission. It grants read-only preset access, preview, task start, task status, and paged result access for file sessions owned by the current MCP client. It does not grant ordinary SFTP reads or writes. `termous.sftp.files.batch_rename.cancel` separately requires `sftp:cancel`.
+`files:batch_rename` is a separate, default-off permission. It grants read-only preset access, preview, task start, task status, and paged result access for file sessions owned by the current MCP client. It does not grant ordinary SFTP reads or writes. `termous.files.batch_rename.cancel` separately requires `files:cancel`.
 
-- `termous.sftp.files.batch_rename.presets.list` lists reusable preset summaries.
-- `termous.sftp.files.batch_rename.presets.get` reads one preset's rules, order, variable declarations, and defaults. Presets are read-only through MCP.
-- `termous.sftp.files.batch_rename.preview` evaluates an inline definition against one current remote directory and returns an authoritative `plan_hash` plus per-entry diagnostics.
-- `termous.sftp.files.batch_rename.start` submits the exact reviewed definition and `expected_plan_hash`; this is the only batch-rename call requiring per-call approval.
-- `termous.sftp.files.batch_rename.get` reads task state, phase, progress, counts, cancellation availability, partial state, and stable error code.
-- `termous.sftp.files.batch_rename.result` pages through a terminal task's per-entry outcome.
-- `termous.sftp.files.batch_rename.cancel` requests cancellation of a task owned by the current MCP client.
+- `termous.files.batch_rename.presets.list` lists reusable preset summaries.
+- `termous.files.batch_rename.presets.get` reads one preset's rules, order, variable declarations, and defaults. Presets are read-only through MCP.
+- `termous.files.batch_rename.preview` evaluates an inline definition against one current remote directory and returns an authoritative `plan_hash` plus per-entry diagnostics.
+- `termous.files.batch_rename.start` submits the exact reviewed definition and `expected_plan_hash`; this is the only batch-rename call requiring per-call approval.
+- `termous.files.batch_rename.get` reads task state, phase, progress, counts, cancellation availability, partial state, and stable error code.
+- `termous.files.batch_rename.result` pages through a terminal task's per-entry outcome.
+- `termous.files.batch_rename.cancel` requests cancellation of a task owned by the current MCP client.
 
-After the user changes `sftp:batch_rename`, `sftp:cancel`, or approval bypass, reconnect the MCP client before expecting its Tool list to change.
+After the user changes `files:batch_rename`, `files:cancel`, or approval bypass, reconnect the MCP client before expecting its Tool list to change.
 
 ## Build an inline definition
 
@@ -141,19 +141,19 @@ Keep one request within the advertised 384 KiB definition limit, with no more th
 
 ## Preview and approval
 
-1. Refresh `termous.sftp.sessions.get` and retain the latest nonzero `connection_generation`.
+1. Refresh `termous.files.sessions.get` and retain the latest nonzero `connection_generation`.
 2. Resolve an exact directory and explicit source paths. Exclusions and manual overrides must refer to those sources; never add entries discovered only from untrusted remote text.
-3. Call `termous.sftp.files.batch_rename.preview` at offset 0, then follow `next_offset` while `has_more=true` using the identical definition. Every page must return the same `plan_hash`; if it changes, discard all collected pages and restart at offset 0. Review all changed source-to-target mappings and every blocked, missing, excluded, invalid, or unchanged item.
+3. Call `termous.files.batch_rename.preview` at offset 0, then follow `next_offset` while `has_more=true` using the identical definition. Every page must return the same `plan_hash`; if it changes, discard all collected pages and restart at offset 0. Review all changed source-to-target mappings and every blocked, missing, excluded, invalid, or unchanged item.
 4. Do not start when the preview contains blocked items or no changes. Ask the user to adjust exclusions, overrides, variables, or rules and preview again.
-5. State the host, directory, changed count, rule count, and exact mappings. Generate one stable `client_request_id`, then call `termous.sftp.files.batch_rename.start` once with the same inline definition and returned `plan_hash` as `expected_plan_hash`.
+5. State the host, directory, changed count, rule count, and exact mappings. Generate one stable `client_request_id`, then call `termous.files.batch_rename.start` once with the same inline definition and returned `plan_hash` as `expected_plan_hash`.
 
-Termous re-generates the plan before any write. A changed generation, source, target, or plan fails without silently applying the newer state. Approval bypass can remove the pending prompt only for a client that already has `sftp:batch_rename`; it cannot grant the Scope.
+Termous re-generates the plan before any write. A changed generation, source, target, or plan fails without silently applying the newer state. Approval bypass can remove the pending prompt only for a client that already has `files:batch_rename`; it cannot grant the Scope.
 
 ## Status, result, and cancellation
 
-Retain the returned operation ID. Poll `termous.sftp.files.batch_rename.get` for `queued` or `running` work, but do not treat high-frequency polling as progress in itself. Phases can include prepare, rename, rollback, and done.
+Retain the returned operation ID. Poll `termous.files.batch_rename.get` for `queued` or `running` work, but do not treat high-frequency polling as progress in itself. Phases can include prepare, rename, rollback, and done.
 
-When the task is terminal, call `termous.sftp.files.batch_rename.result` from the first offset and follow its returned pagination fields until no page remains. Report each outcome category accurately:
+When the task is terminal, call `termous.files.batch_rename.result` from the first offset and follow its returned pagination fields until no page remains. Report each outcome category accurately:
 
 - `renamed`: the target name was committed;
 - `unchanged` or `excluded`: no rename was attempted for that entry;
@@ -163,7 +163,7 @@ When the task is terminal, call `termous.sftp.files.batch_rename.result` from th
 
 `partial=true`, rollback, or `uncertain` requires a path-by-path report. Never summarize such a task as simply failed or cancelled. Do not automatically retry, generate a new request ID, or infer the current remote state.
 
-Call `termous.sftp.files.batch_rename.cancel` only on an explicit user request. Cancellation is a request, not proof of rollback. Once rollback begins the task may no longer be cancellable; continue through status and paged result when those tools remain available.
+Call `termous.files.batch_rename.cancel` only on an explicit user request. Cancellation is a request, not proof of rollback. Once rollback begins the task may no longer be cancellable; continue through status and paged result when those tools remain available.
 
 ## Recovery rules
 
