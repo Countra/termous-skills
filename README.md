@@ -8,6 +8,8 @@ Termous Skills provide six focused workflows for the Termous MCP server, coverin
 
 Complete the assistant's initial setup and configure a model service under Settings → AI Assistant. The application includes the skills and manages its own MCP client, so you do not need to install them separately or copy an external-client token. The assistant's approval setting is separate from the settings for external MCP clients.
 
+Right-click a terminal or file session tab to pass its connection to a new or existing AI conversation. Selected terminal text can also be sent through its context menu as an attachment. Passing a connection does not prefill a question, send a message, or start a model task. Host/profile rows and port-forwarding panels no longer provide assistant launch actions; the port-forwarding skill and MCP tools remain available for requests made in the assistant.
+
 ### External MCP clients
 
 1. Keep Termous running and open Settings → MCP.
@@ -37,7 +39,16 @@ After changing a Termous MCP client's Scopes or approval-bypass setting, reconne
 
 A host can have several connection profiles, or no SSH connection at all. Discover its access profiles and choose the requested SSH or file profile; do not assume that every host supports SSH or that every session for a host uses the same account and route.
 
-内置助手可同时引用一个精确 SSH 会话和一个文件 profile，以两类 `TERMOUS_VERIFIED_RESOURCE` 提供可信路由。SSH 工具直接使用 `kind=ssh_session` 的会话，失效后由用户在 SSH 卡片中恢复连接或替换引用。文件工具使用 `kind=file_profile` 的精确 `file_access_profile_id`，复用当前 MCP 客户端拥有的文件连接，没有可复用连接时按该配置创建自己的文件会话。原文件标签关闭或断开不影响 profile 引用；profile 删除或身份归属失效则需用户替换或解除。两类引用独立选路，不增加权限，也不移除审批与主机信任校验。
+The built-in assistant can reference one exact SSH session and one file profile at the same time. Each run receives the current bindings through `TERMOUS_VERIFIED_RESOURCE`:
+
+| Binding kind | Tool routing |
+| --- | --- |
+| `ssh_session` | Use the verified `session_id` for new SSH operations. If it becomes unavailable, ask the user to recover the connection from its SSH card or replace the reference. |
+| `file_profile` | Use the exact `file_access_profile_id`. Reuse a suitable file session owned by the current MCP client, or call `termous.files.sessions.connect` with that profile to create one. Never operate through the original desktop file tab. |
+
+SSH recovery is a Core operation using the saved SSH profile's current configuration. It creates a new MCP session and updates the reference only after the connection is ready, without reusing the old session ID, calling a model, or adding a recovery MCP tool. Existing queued messages remain paused until the user resumes them. File references need no recovery button: closing or disconnecting the original tab does not invalidate the profile. If the profile is deleted or its host/SSH configuration association becomes invalid, ask the user to replace or remove the reference.
+
+Current verified bindings take precedence over IDs and stale-connection conclusions in historical messages, tool results, and compacted summaries. A missing binding does not restore an old binding constraint. Queries or interruption of an existing task keep that task's original identifiers; do not rewrite them to the new session or replay the command. Both binding types route independently and retain the existing permission, ownership, approval, and host-key checks.
 
 ## Safety model
 
@@ -64,9 +75,9 @@ The default source is `../termous-skills/skills` and the default Core checkout i
 
 `contracts/mcp-tools.json` mirrors only the stable Tool name, Scope, approval class, and primary Skill ownership. It intentionally does not duplicate Tool schemas or Backend DTOs. Contract v2 covers 81 Tools and 30 Scopes for MCP protocol `2025-11-25`; a client's visible tools depend on its granted scopes.
 
-文件管理统一使用 `termous.files.*`、`files:*` 和 `termous-files`，外部 MCP 调用不再接受旧工具名。更新客户端安装的技能并重新连接，以读取当前工具目录；文件会话目前仍使用 SFTP，不新增本机浏览或其他协议。校验器保留 v1 冻结基准，仅允许明确列出的 31 个工具及 9 个权限改名，其他工具和审批策略保持不变。
+File management uses `termous.files.*`, `files:*`, and `termous-files`. External MCP calls no longer accept the old tool names; update installed skills and reconnect to load the current tool catalog. File sessions still use SFTP; this naming change adds neither local browsing nor another protocol. The validator retains a frozen v1 baseline and permits only the listed renaming of 31 tools and 9 scopes, preserving other tools and approval policies.
 
-SFTP 删除使用独立的 `files:delete` 权限，遵循完整预览、审批、异步执行和逐项结果查询；取消权限仍为 `files:cancel`。外部客户端的现有写权限不会自动扩大；内置 AI 托管客户端随 Core 启动自动同步全部能力，保留原审批策略。删除不会回滚，网络中断后的不确定结果不能自动重试。详见 [删除工作流](skills/termous-files/references/deletion.md)。
+SFTP deletion requires the separate `files:delete` scope and follows a complete preview, approval, asynchronous execution, and per-item result workflow. Cancellation still uses `files:cancel`. Existing external-client write permissions are not expanded automatically; the managed built-in client synchronizes current capabilities at Core startup while preserving its approval policy. Deletion has no rollback, and an uncertain result after a network interruption must not be retried automatically. See the [deletion workflow](skills/termous-files/references/deletion.md).
 
 Install development dependencies and validate the standalone repository:
 
