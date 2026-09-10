@@ -8,7 +8,7 @@
 4. Call `termous.commands.dispatch` with a new stable request ID for the execution itself. Snippet-read or snippet-write approval never authorizes execution.
 5. Use `termous.commands.get` and `termous.commands.read_output` to verify each target. Report non-zero exit codes, gaps, truncation, and uncertain states.
 
-If a verified target becomes unavailable, stop execution setup and ask the user to rebind it in Termous. Do not call `termous.sessions.list` to replace it with a different Session.
+If a verified target becomes unavailable, stop execution setup and ask the user to restore the connection or replace its reference in the Termous UI. Do not call `termous.sessions.list` to replace it with a different Session.
 
 ## Concurrency and recovery
 

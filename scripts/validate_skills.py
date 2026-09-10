@@ -363,6 +363,8 @@ def validate_verified_resource_guidance(documents: dict[str, str], errors: list[
             "TERMOUS_VERIFIED_RESOURCE",
             "source_context.entity_id",
             "termous.sessions.list",
+            "在界面恢复连接或替换引用",
+            "不需要新增 MCP 工具",
         ):
             if required not in content:
                 errors.append(
@@ -390,7 +392,7 @@ def validate_verified_resource_guidance(documents: dict[str, str], errors: list[
     system_ops_errors = documents.get("termous-system-ops", "")
     if "ask the user to restore an exact Termous SSH session" in system_ops_errors:
         errors.append(
-            "termous-system-ops: stale bindings must require UI rebind rather than session restore"
+            "termous-system-ops: 失效引用必须说明由用户在界面恢复连接或替换引用，不能让模型自行恢复"
         )
 
     files = documents.get("termous-files", "")

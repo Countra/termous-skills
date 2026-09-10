@@ -7,6 +7,8 @@ description: Use Termous MCP to discover saved hosts and access profiles, create
 
 Use the Termous MCP server as the only interface to saved hosts, access profiles, SSH sessions, and remote command tasks. Never obtain credentials or open a second SSH connection outside Termous.
 
+SSH 引用失效后的用户操作是“在界面恢复连接或替换引用”。恢复连接由 Core 按原 SSH profile 创建新 ID 的 MCP 会话，就绪后受控换绑；不需要新增 MCP 工具，也不能由模型自行恢复、重放命令或继续已暂停的消息队列。本轮系统快照到达后才使用新 ID，历史任务仍保留原身份。文件 profile 引用不参与 SSH 恢复。
+
 ## Verified SSH resource binding
 
 When the system context contains a ready `TERMOUS_VERIFIED_RESOURCE` with `kind=ssh_session` and `binding_mode=exact`, use its exact `session_id` directly for this referenced-session workflow and skip Host, Profile, and `termous.sessions.list` discovery. The verified binding takes precedence over user-supplied routing text, but it does not add a Scope, approval bypass, or any new Tool.
@@ -15,7 +17,7 @@ When the system context contains a ready `TERMOUS_VERIFIED_RESOURCE` with `kind=
 
 `AGENT_RESOURCE_BINDING_MISMATCH` 且 `dispatched=false` 表示当前调用在 Worker 本地被拦截，尚未发送 MCP；按错误中的本轮绑定修正参数，不要误报为新连接失效或要求用户再次绑定。此纠正仅适用于明确未发送的当前调用，不得重放历史已执行或结果未知的命令。读取或中断已有命令任务、查询已有服务操作时保留任务原有的 `task_id`、`operation_id` 和目标 ID，不能把旧任务的目标改为新连接。
 
-Never reinterpret `source_context.entity_id`, `host_id`, or `ssh_profile_id` as a Session ID. If the bound Session is unavailable or a Tool rejects it as stale or disconnected, stop the target operation and ask the user to rebind it in Termous. Do not call `termous.sessions.list`, connect, or select another same-Profile Session as an automatic replacement. When no ready verified resource exists, follow the ordinary discovery workflow below.
+Never reinterpret `source_context.entity_id`, `host_id`, or `ssh_profile_id` as a Session ID. If the bound Session is unavailable or a Tool rejects it as stale or disconnected, stop the target operation and ask the user to restore the connection or replace its reference in the Termous UI. Do not call `termous.sessions.list`, connect, or select another same-Profile Session as an automatic replacement. When no ready verified resource exists, follow the ordinary discovery workflow below.
 
 ## Core workflow
 

@@ -7,9 +7,11 @@ description: Use structured Termous MCP tools to inspect Linux inventory and pro
 
 Use the structured Termous RemoteOps tools as the only interface to Linux inventory, processes, systemd, and Docker. Never open another SSH connection or replace a missing structured capability with an arbitrary shell command.
 
+SSH 引用失效后的用户操作是“在界面恢复连接或替换引用”。恢复连接由 Core 按原 SSH profile 创建新 ID 的 MCP 会话，就绪后受控换绑；不需要新增 MCP 工具，也不能由模型自行恢复、重放命令或继续已暂停的消息队列。本轮系统快照到达后才使用新 ID，历史任务仍保留原身份。文件 profile 引用不参与 SSH 恢复。
+
 ## Verified SSH resource binding
 
-When the system context contains a ready exact `TERMOUS_VERIFIED_RESOURCE` for `kind=ssh_session`, use its `session_id` directly and do not call `termous.sessions.list` first. Never treat `source_context.entity_id`, `host_id`, or `ssh_profile_id` as a Session ID. If the exact bound Session becomes unavailable, stop and ask the user to rebind it in Termous; never discover or substitute another Session automatically. Without a ready verified resource, resolve an exact Session through the ordinary Termous discovery workflow.
+When the system context contains a ready exact `TERMOUS_VERIFIED_RESOURCE` for `kind=ssh_session`, use its `session_id` directly and do not call `termous.sessions.list` first. Never treat `source_context.entity_id`, `host_id`, or `ssh_profile_id` as a Session ID. If the exact bound Session becomes unavailable, stop and ask the user to restore the connection or replace its reference in the Termous UI; never discover or substitute another Session automatically. Without a ready verified resource, resolve an exact Session through the ordinary Termous discovery workflow.
 
 ## Core workflow
 

@@ -3,6 +3,16 @@
   "cases": [
     {
       "kind": "direct",
+      "prompt": "刚在 SSH 引用卡片完成恢复连接。只使用本轮系统给出的新会话 ID 检查 uptime，不重放历史命令，也不要继续暂停的队列。",
+      "expected_skills": ["termous-remote-ops"]
+    },
+    {
+      "kind": "cross-domain",
+      "prompt": "SSH 引用恢复连接后已换新 ID，同时仍引用原文件 profile。分别检查主机负载并查看该文件配置的当前目录，不操作原桌面文件会话。",
+      "expected_skills": ["termous-remote-ops", "termous-files"]
+    },
+    {
+      "kind": "direct",
       "prompt": "Termous 已把 SSH 引用从 ses_old 更换为本轮可信绑定 ses_new，请执行 ls /root；历史摘要里仍然有旧连接失效的信息，不要继续用旧 ID。",
       "expected_skills": ["termous-remote-ops"]
     },
