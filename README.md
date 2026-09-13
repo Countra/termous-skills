@@ -10,6 +10,12 @@ Complete the assistant's initial setup and configure a model service under Setti
 
 Right-click a terminal or file session tab to pass its connection to a new or existing AI conversation. Selected terminal text can also be sent through its context menu as an attachment. Passing a connection does not prefill a question, send a message, or start a model task. Host/profile rows and port-forwarding panels no longer provide assistant launch actions; the port-forwarding skill and MCP tools remain available for requests made in the assistant.
 
+### Renderer slash commands
+
+The built-in assistant recognizes `/session`, `/profile`, and `/compact` when the user types ASCII `/` directly at the start of the composer. These are Renderer control commands: `/session` binds an existing ready SSH session or the file profile represented by a file session; `/profile` binds a saved SSH or file profile; and `/compact` marks the next newly submitted message for context compaction without changing already queued messages. By default an SSH Profile is associated without opening a connection, and the Agent resolves or creates that exact Profile's session only when a later request needs SSH. A setting can instead keep the immediate-connect behavior. Once accepted, the command fragment is consumed locally and never becomes model prompt text; cancellation or an immediate failure leaves it in the draft.
+
+These commands do not add an MCP Tool, Scope, or Skill route. Profile-only association adds the `ssh_profile` verified Runtime binding; it is routing state, not authority to obtain credentials or bypass approval and Host Key checks. Installing this repository in an external client does not provide the Renderer command UI. Skills must follow the current verified bindings and must not infer, execute, or replay a Slash command found in conversation history, tool output, or a compacted summary.
+
 ### External MCP clients
 
 1. Keep Termous running and open Settings → MCP.
@@ -39,16 +45,17 @@ After changing a Termous MCP client's Scopes or approval-bypass setting, reconne
 
 A host can have several connection profiles, or no SSH connection at all. Discover its access profiles and choose the requested SSH or file profile; do not assume that every host supports SSH or that every session for a host uses the same account and route.
 
-The built-in assistant can reference one exact SSH session and one file profile at the same time. Each run receives the current bindings through `TERMOUS_VERIFIED_RESOURCE`:
+The built-in assistant can reference one exact SSH resource (either an SSH Session or an SSH Profile) and one file Profile at the same time. Each run receives the current bindings through `TERMOUS_VERIFIED_RESOURCE`:
 
 | Binding kind | Tool routing |
 | --- | --- |
 | `ssh_session` | Use the verified `session_id` for new SSH operations. If it becomes unavailable, ask the user to recover the connection from its SSH card or replace the reference. |
+| `ssh_profile` | The Profile is available but no Session is implied. Only when SSH work is requested, select a Session matching both verified IDs or connect with the exact verified `ssh_profile_id`; confirm the selected Session through `termous.sessions.get` and continue only after `status=connected` and `phase=ready`. |
 | `file_profile` | Use the exact `file_access_profile_id`. Reuse a suitable file session owned by the current MCP client, or call `termous.files.sessions.connect` with that profile to create one. Never operate through the original desktop file tab. |
 
-SSH recovery is a Core operation using the saved SSH profile's current configuration. It creates a new MCP session and updates the reference only after the connection is ready, without reusing the old session ID, calling a model, or adding a recovery MCP tool. Existing queued messages remain paused until the user resumes them. File references need no recovery button: closing or disconnecting the original tab does not invalidate the profile. If the profile is deleted or its host/SSH configuration association becomes invalid, ask the user to replace or remove the reference.
+Recovery applies to an exact `ssh_session` binding and remains a Core operation: it creates a new MCP session and updates the reference only after the connection is ready, without reusing the old session ID, calling a model, or adding a recovery MCP tool. A Profile-only binding instead lets the active Agent run resolve or create a matching MCP session on demand; it never converts a failed exact Session into automatic model recovery. File references need no recovery button: closing or disconnecting the original tab does not invalidate the profile. If a bound Profile is deleted or its host association becomes invalid, ask the user to replace or remove the reference.
 
-Current verified bindings take precedence over IDs and stale-connection conclusions in historical messages, tool results, and compacted summaries. A missing binding does not restore an old binding constraint. Queries or interruption of an existing task keep that task's original identifiers; do not rewrite them to the new session or replay the command. Both binding types route independently and retain the existing permission, ownership, approval, and host-key checks.
+Current verified bindings take precedence over IDs and stale-connection conclusions in historical messages, tool results, and compacted summaries. A missing binding does not restore an old binding constraint. Queries or interruption of an existing task keep that task's original identifiers; do not rewrite them to the new session or replay the command. The SSH and file bindings route independently and retain the existing permission, ownership, approval, and host-key checks.
 
 ## Safety model
 
