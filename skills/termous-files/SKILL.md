@@ -47,7 +47,7 @@ For session and ordinary file call sequences, read [references/session-and-files
 - Do not claim that cancellation rolls back already completed files.
 - Do not bypass batch-rename preview, approval, plan-hash, ownership, or result checks with repeated single-file renames or shell commands.
 - Do not install or upgrade `fd` through MCP, and do not replace the dedicated file-name search with `commands.dispatch`, `find`, `locate`, or an ad hoc `fd` command. When capability is not ready, stop and direct the user to install it manually or through the Termous file manager.
-- Do not use unsupported same-host copy, image, or arbitrary binary-read operations through another interface. `files.rename` may rename or move an entry within one file session, but it is not a copy or delete substitute. Use the dedicated deletion workflow, never Shell commands or an expanded target set.
+- 远端复制可以使用同一主机上的两个独立文件会话，必须通过 `files.transfers.remote_copy` 并遵守来源、目标路径重叠检查。不要通过其他接口绕过不支持的图片或任意二进制读取操作。`files.rename` 只用于重命名或移动，不能替代复制或删除；删除必须使用专用预览和任务流程。
 
 ## Connection failures
 

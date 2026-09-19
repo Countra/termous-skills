@@ -32,11 +32,11 @@ Use `termous.files.transfers.download` to copy remote files or directories to an
 4. Call the download tool. Termous requests native approval unless the client is explicitly configured to skip approvals. When a decision is required, do not treat an MCP-side confirmation as a substitute.
 5. Never claim that the local files exist until the transfer task reaches a successful final state.
 
-## Copy between remote hosts
+## 远端文件会话间复制
 
-Use `termous.files.transfers.remote_copy` to stream files through Termous Core from one remote host to another.
+使用 `termous.files.transfers.remote_copy`，由 Termous Core 在两个远端文件会话之间流式复制。
 
-1. Use two connected MCP-owned file sessions whose `host_id` values are different.
+1. 使用当前 MCP 客户端拥有的两个已连接会话，`file_session_id` 必须不同；允许相同 `host_id`。同一命名空间仍执行来源与目标路径重叠检查，不能复制到自身或来源目录内部。
 2. Pass the source identity as `source_file_session_id` and `source_connection_generation`, and the target identity as `target_file_session_id` and `target_connection_generation`.
 3. Use an existing absolute POSIX destination directory as `target_dir`. Show the exact source paths, destination directory, source and target hosts, and overwrite policy.
 4. Call the tool once. Termous requests native approval unless the client is explicitly configured to skip approvals. Do not emulate this operation with a local download followed by an upload.
