@@ -15,6 +15,8 @@
 
 ## Resolve a host and create a file session
 
+S3 / MinIO 与 SFTP 统一通过主机访问目录发现。S3 配置归属 `host_id`，但没有 SSH 传输依赖；使用明确的文件 Profile ID 或主机默认文件配置创建会话，不伪造 `ssh_profile_id`。
+
 1. Call `termous.hosts.list` and resolve the requested saved host to one exact `host_id`.
 2. Call `termous.hosts.access_profiles.list` with that Host. The catalog is a sanitized routing view. For a Host-only request, resolve the one file Profile marked `is_default` and retain `host_id` as the connect selector. For an explicit Profile request, resolve one exact `file_access_profile_id`. A current SFTP Profile also identifies its bound SSH Profile, but that binding is not an interchangeable selector.
 3. Call `termous.files.sessions.list`. A returned session belongs to the current MCP client, but still verify its actual `host_id`, `file_access_profile_id`, `ssh_profile_id`, engine, namespace, status, capabilities, and generation.
@@ -64,4 +66,4 @@ Before calling `termous.files.save_text`, `termous.files.mkdir`, `termous.files.
 6. Termous requests native approval unless the client is explicitly configured to skip approvals. Rejection, expiry, or cancellation means no write was authorized; do not infer bypass from success alone.
 7. On success, `stat` or read the result only when verification is useful and the corresponding read scope is available.
 
-Never reinterpret a rename as deletion, recursive move, or same-host copy. Use only the operation exposed by the current MCP tool schema.
+`termous.files.rename` 表达一个来源到一个精确目标的改名或同会话移动，目标已存在时拒绝覆盖。对缺少原生改名的存储，后端内部处理目录快照、条件复制及删除，审批会标注非原子执行；调用方不拆成自行发起的复制/删除，也不提交内部计划。失败或取消后保留相同请求 ID 查询结果，并检查两端，不自动重放修改。独立删除和复制继续使用各自工具、权限及审批流程。

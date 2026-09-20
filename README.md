@@ -33,7 +33,7 @@ The MCP client must support Streamable HTTP and client-token authentication. An 
 | [termous-remote-ops](skills/termous-remote-ops/SKILL.md) | Saved hosts, access profiles, SSH sessions, commands, output, and interruption | `hosts:read`, `hosts:probe`, `sessions:read`, `sessions:connect`, `sessions:close`, `commands:execute`, `commands:read`, `commands:interrupt` |
 | [termous-system-ops](skills/termous-system-ops/SKILL.md) | Inventory, processes, systemd, and Docker on a connected Linux session | `system:read`, `processes:read`, `processes:terminate`, `services:read`, `services:manage`, `docker:read`, `docker:manage` |
 | [termous-crontab](skills/termous-crontab/SKILL.md) | Structured jobs in the current SSH user's Crontab | `crontab:read`, `crontab:write` |
-| [termous-files](skills/termous-files/SKILL.md) | File sessions (currently SFTP), remote files, Linux file-name search, batch rename, deletion, uploads, downloads, and cross-host copies | `files:read`, `files:connect`, `files:close`, `files:write`, `files:delete`, `files:transfer`, `files:cancel`, `files:batch_rename`, `files:search` |
+| [termous-files](skills/termous-files/SKILL.md) | 文件会话（SFTP、S3 / MinIO）, remote files, Linux file-name search, batch rename, deletion, uploads, downloads, and cross-host copies | `files:read`, `files:connect`, `files:close`, `files:write`, `files:delete`, `files:transfer`, `files:cancel`, `files:batch_rename`, `files:search` |
 | [termous-port-forwarding](skills/termous-port-forwarding/SKILL.md) | Saved and inline local, remote, or dynamic forwarding | `forwarding:read`, `forwarding:manage` |
 | [termous-snippets](skills/termous-snippets/SKILL.md) | Saved command snippets and groups | `snippets:read`, `snippets:write` |
 
@@ -82,7 +82,7 @@ The default source is `../termous-skills/skills` and the default Core checkout i
 
 `contracts/mcp-tools.json` mirrors only the stable Tool name, Scope, approval class, and primary Skill ownership. It intentionally does not duplicate Tool schemas or Backend DTOs. Contract v2 covers 81 Tools and 30 Scopes for MCP protocol `2025-11-25`; a client's visible tools depend on its granted scopes.
 
-File management uses `termous.files.*`, `files:*`, and `termous-files`. External MCP calls no longer accept the old tool names; update installed skills and reconnect to load the current tool catalog. File sessions still use SFTP; this naming change adds neither local browsing nor another protocol. The validator retains a frozen v1 baseline and permits only the listed renaming of 31 tools and 9 scopes, preserving other tools and approval policies.
+文件管理使用 `termous.files.*`、`files:*` 和 `termous-files`，支持 SFTP 与已配置的 S3 / MinIO，不开放任意本地浏览。外部 MCP 不再接受旧工具名；更新 Skills 并重新连接以加载工具目录。校验器保留冻结的 v1 基线，仅允许既定的 31 项工具、9 项权限改名，配置发现复用主机访问目录；其余权限和审批策略保持兼容。
 
 SFTP deletion requires the separate `files:delete` scope and follows a complete preview, approval, asynchronous execution, and per-item result workflow. Cancellation still uses `files:cancel`. Existing external-client write permissions are not expanded automatically; the managed built-in client synchronizes current capabilities at Core startup while preserving its approval policy. Deletion has no rollback, and an uncertain result after a network interruption must not be retried automatically. See the [deletion workflow](skills/termous-files/references/deletion.md).
 
@@ -109,3 +109,5 @@ For every MCP Tool change:
 5. Forward-test direct, negative, and cross-domain prompts before creating a Git tag.
 
 Git tags version the repository. Desktop releases select matching Core and Skills revisions and validate their compatibility before packaging. Skill frontmatter remains limited to standard fields.
+
+S3 文件配置在主机的文件访问配置中创建，认证材料由 Termous 加密保存，MCP 不提供凭据管理工具。改名和同会话移动沿用 `termous.files.rename`，使用 `files:write` 和既有审批；后端按存储能力选择原语或复制后删除，调用方不提交内部计划。非原子执行失败后必须检查来源和目标，不自动重放。

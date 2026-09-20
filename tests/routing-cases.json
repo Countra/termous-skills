@@ -1,6 +1,7 @@
 {
   "schema_version": 1,
   "cases": [
+    { "kind": "direct", "prompt": "在 Termous 中浏览已保存的 MinIO 配置并为一个对象改名", "expected_skills": ["termous-files"] },
     {
       "kind": "direct",
       "prompt": "刚在 SSH 引用卡片完成恢复连接。只使用本轮系统给出的新会话 ID 检查 uptime，不重放历史命令，也不要继续暂停的队列。",

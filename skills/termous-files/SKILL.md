@@ -1,11 +1,11 @@
 ---
 name: termous-files
-description: Use Termous MCP file sessions to browse or maintain remote files, search Linux file names with fd, preview batch renames or deletions, transfer files between local and remote systems, copy between remote hosts, or inspect and cancel file tasks. Current remote file sessions use SFTP. Trigger only for Termous file management; do not use for local-only files, HTTP/S3 transfers, SCP, or an exact shell command.
+description: Use Termous MCP file sessions to browse or maintain remote files, search Linux file names with fd, preview batch renames or deletions, transfer files between local and remote systems, copy between remote hosts, or inspect and cancel file tasks. 文件会话支持 SFTP 和已配置的 S3 / MinIO。 Trigger only for Termous file management; do not use for local-only files, arbitrary HTTP downloads, SCP, or an exact shell command.
 ---
 
 # Termous Files
 
-Use the Termous MCP server as the only interface to saved hosts, file sessions, remote files, and transfer tasks. Current file sessions use the SFTP engine; the file-management namespace does not grant local browsing or add other protocols. Never obtain credentials or open a separate SSH/SFTP connection outside Termous.
+Use the Termous MCP server as the only interface to saved hosts, file sessions, remote files, and transfer tasks. 文件会话支持 SFTP 及 S3 / MinIO，具体操作以会话 capabilities 为准；不授予任意本地浏览或 Bucket 管理能力。 Never obtain credentials or open a separate SSH/SFTP connection outside Termous.
 
 ## 可信资源与文件引用
 
@@ -20,6 +20,7 @@ Use the Termous MCP server as the only interface to saved hosts, file sessions, 
 
 1. Inspect the tools advertised by the current MCP connection. If a required tool is absent, report its corresponding scope instead of substituting another interface. Host discovery uses `hosts:read`; SFTP session queries and file reads use `files:read`, connect/reconnect uses `files:connect`, close uses `files:close`, file writes use `files:write`, deletion preview/start/status/result uses `files:delete`, transfer start/get uses `files:transfer`, batch-rename presets/preview/start/status/result use `files:batch_rename`, Linux file-name capability/search uses `files:search`, and cancellation uses `files:cancel`.
 2. 有可信 `kind=file_profile` 时采用上述精确 profile 分支，并从第 3 步继续。否则调用 `termous.hosts.list` 解析主机，再调用 `termous.hosts.access_profiles.list` 获取脱敏目录；用户只选择主机时用默认文件配置，指定配置时解析精确 `file_access_profile_id`，名称有歧义时先澄清。
+   S3 / MinIO 同样归属于主机，使用上述主机访问目录发现；它具有 `host_id`，但不依赖 `ssh_profile_id`，不得伪造 SSH 绑定。
 3. Call `termous.files.sessions.list`. Reuse or poll a session only when its actual `file_access_profile_id` matches the selected file Profile; a matching `host_id` or `ssh_profile_id` alone is insufficient.
 4. Call `termous.files.sessions.connect` with one stable `client_request_id` only when no matching current-client session exists. Send exactly one selector: `host_id` means the category default, while `file_access_profile_id` means that exact Profile. Never send both or reinterpret one ID type as another.
 5. Poll `termous.files.sessions.get` until the selected session is connected and ready. Ask before reconnecting a failed or disconnected session, and direct Host Key trust decisions to Termous.
@@ -31,11 +32,13 @@ Use the Termous MCP server as the only interface to saved hosts, file sessions, 
 
 For session and ordinary file call sequences, read [references/session-and-files.md](references/session-and-files.md). For Linux-wide or directory-scoped file-name search, capability states, and advanced filters, read [references/file-name-search.md](references/file-name-search.md). For reusable rules, preview, execution, results, and rollback behavior, read [references/batch-rename.md](references/batch-rename.md). For upload, download, remote copy, and task polling, read [references/transfers.md](references/transfers.md). For approval, path, privacy, and error rules, read [references/safety-and-errors.md](references/safety-and-errors.md).
 
+改名和同会话移动统一使用 `termous.files.rename`，由后端选择实现。对象存储可能复制后删除；审批会提示非原子行为，失败后检查两端，不自动重放。S3 不支持权限编辑、SSH 名称搜索或事务式批量改名。
+
 ## Non-negotiable boundaries
 
 删除必须遵循 [references/deletion.md](references/deletion.md) 的完整预览、审批、任务和结果流程。预览、启动、状态及结果需要独立的 `files:delete`，取消仍使用 `files:cancel`。现有 `files:write` 不自动取得删除权限。
 
-- Manage only SFTP file sessions and transfer tasks visible to the current MCP client. Termous Desktop is a trusted management surface and may display or close MCP file sessions and display, cancel, or remove MCP transfer tasks without making them visible to another MCP client. Do not use interactive SSH session IDs as SFTP file session IDs.
+- Manage only Termous file sessions and transfer tasks visible to the current MCP client. Termous Desktop is a trusted management surface and may display or close MCP file sessions and display, cancel, or remove MCP transfer tasks without making them visible to another MCP client. Do not use interactive SSH session IDs as SFTP file session IDs.
 - Treat a Host as an asset and a file Profile as the exact access route. Match and reuse sessions by `file_access_profile_id`, not merely by Host or bound SSH Profile.
 - Never request, print, store, or infer passwords, private keys, bearer tokens, proxy credentials, or Host Key secrets.
 - Never approve or replace a Host Key through MCP. Ask the user to resolve the native prompt in Termous.
