@@ -15,7 +15,7 @@
 
 ## Resolve a host and create a file session
 
-S3 / MinIO、WebDAV 与 SFTP 统一通过主机访问目录发现。S3 和 WebDAV 配置归属 `host_id`，但没有 SSH 传输依赖；使用明确的文件 Profile ID 或主机默认文件配置创建会话，不伪造 `ssh_profile_id`。WebDAV 的服务根路径映射为 `/`，所有文件工具继续使用工作区绝对路径。
+S3 / MinIO、WebDAV、FTP / FTPS 与 SFTP 统一通过主机访问目录发现。S3、WebDAV 和 FTP 配置归属 `host_id`，但没有 SSH 传输依赖；使用明确的文件 Profile ID 或主机默认文件配置创建会话，不伪造 `ssh_profile_id`。WebDAV 和 FTP 的服务根路径映射为 `/`，所有文件工具继续使用工作区绝对路径。FTP 首版仅支持 UTF-8 名称，不跟随已识别的符号链接。
 
 1. Call `termous.hosts.list` and resolve the requested saved host to one exact `host_id`.
 2. Call `termous.hosts.access_profiles.list` with that Host. The catalog is a sanitized routing view. For a Host-only request, resolve the one file Profile marked `is_default` and retain `host_id` as the connect selector. For an explicit Profile request, resolve one exact `file_access_profile_id`. A current SFTP Profile also identifies its bound SSH Profile, but that binding is not an interchangeable selector.
