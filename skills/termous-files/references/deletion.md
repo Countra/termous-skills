@@ -2,6 +2,8 @@
 
 删除通过 `termous.files.delete.*` 工具进行，删除预览、启动、状态和结果需要独立的 `files:delete` 权限，取消需要 `files:cancel`。已有 `files:write` 不包含删除权限；缺少工具时提示在 Termous 中授权，不能改用 Shell 命令绕过。
 
+WebDAV 同样复用此流程。服务端集合 DELETE 具有递归语义，删除前的空目录复核不能消除外部并发新增的窗口；不要宣称具备文件系统式的原子空目录删除保证。部分失败或结果不确定时检查明细，不自动重放。
+
 ## 预览与启动
 
 1. 按普通 SFTP 流程确认当前客户端拥有的、已连接的文件会话，使用最新 `file_session_id` 和 `expected_connection_generation`。交互终端的 SSH 会话 ID 不能代替文件会话 ID。

@@ -1,11 +1,11 @@
 ---
 name: termous-files
-description: Use Termous MCP file sessions to browse or maintain remote files, search Linux file names with fd, preview batch renames or deletions, transfer files between local and remote systems, copy between remote hosts, or inspect and cancel file tasks. 文件会话支持 SFTP 和已配置的 S3 / MinIO。 Trigger only for Termous file management; do not use for local-only files, arbitrary HTTP downloads, SCP, or an exact shell command.
+description: Use Termous MCP file sessions to browse or maintain remote files, search Linux file names with fd, preview batch renames or deletions, transfer files between local and remote systems, copy between remote hosts, or inspect and cancel file tasks. 文件会话支持 SFTP、已配置的 S3 / MinIO 和 WebDAV。 Trigger only for Termous file management; do not use for local-only files, arbitrary HTTP downloads, SCP, or an exact shell command.
 ---
 
 # Termous Files
 
-Use the Termous MCP server as the only interface to saved hosts, file sessions, remote files, and transfer tasks. 文件会话支持 SFTP 及 S3 / MinIO，具体操作以会话 capabilities 为准；不授予任意本地浏览或 Bucket 管理能力。 Never obtain credentials or open a separate SSH/SFTP connection outside Termous.
+Use the Termous MCP server as the only interface to saved hosts, file sessions, remote files, and transfer tasks. 文件会话支持 SFTP、S3 / MinIO 和 WebDAV，具体操作以会话 capabilities 为准；不授予任意本地浏览或 Bucket 管理能力。 Never obtain credentials or open a separate SSH/SFTP connection outside Termous.
 
 ## 可信资源与文件引用
 
@@ -20,7 +20,7 @@ Use the Termous MCP server as the only interface to saved hosts, file sessions, 
 
 1. Inspect the tools advertised by the current MCP connection. If a required tool is absent, report its corresponding scope instead of substituting another interface. Host discovery uses `hosts:read`; SFTP session queries and file reads use `files:read`, connect/reconnect uses `files:connect`, close uses `files:close`, file writes use `files:write`, deletion preview/start/status/result uses `files:delete`, transfer start/get uses `files:transfer`, batch-rename presets/preview/start/status/result use `files:batch_rename`, Linux file-name capability/search uses `files:search`, and cancellation uses `files:cancel`.
 2. 有可信 `kind=file_profile` 时采用上述精确 profile 分支，并从第 3 步继续。否则调用 `termous.hosts.list` 解析主机，再调用 `termous.hosts.access_profiles.list` 获取脱敏目录；用户只选择主机时用默认文件配置，指定配置时解析精确 `file_access_profile_id`，名称有歧义时先澄清。
-   S3 / MinIO 同样归属于主机，使用上述主机访问目录发现；它具有 `host_id`，但不依赖 `ssh_profile_id`，不得伪造 SSH 绑定。
+   S3 / MinIO 和 WebDAV 同样归属于主机，使用上述主机访问目录发现；它们具有 `host_id`，但不依赖 `ssh_profile_id`，不得伪造 SSH 绑定。
 3. Call `termous.files.sessions.list`. Reuse or poll a session only when its actual `file_access_profile_id` matches the selected file Profile; a matching `host_id` or `ssh_profile_id` alone is insufficient.
 4. Call `termous.files.sessions.connect` with one stable `client_request_id` only when no matching current-client session exists. Send exactly one selector: `host_id` means the category default, while `file_access_profile_id` means that exact Profile. Never send both or reinterpret one ID type as another.
 5. Poll `termous.files.sessions.get` until the selected session is connected and ready. Ask before reconnecting a failed or disconnected session, and direct Host Key trust decisions to Termous.
@@ -33,6 +33,8 @@ Use the Termous MCP server as the only interface to saved hosts, file sessions, 
 For session and ordinary file call sequences, read [references/session-and-files.md](references/session-and-files.md). For Linux-wide or directory-scoped file-name search, capability states, and advanced filters, read [references/file-name-search.md](references/file-name-search.md). For reusable rules, preview, execution, results, and rollback behavior, read [references/batch-rename.md](references/batch-rename.md). For upload, download, remote copy, and task polling, read [references/transfers.md](references/transfers.md). For approval, path, privacy, and error rules, read [references/safety-and-errors.md](references/safety-and-errors.md).
 
 改名和同会话移动统一使用 `termous.files.rename`，由后端选择实现。对象存储可能复制后删除；审批会提示非原子行为，失败后检查两端，不自动重放。S3 不支持权限编辑、SSH 名称搜索或事务式批量改名。
+
+WebDAV 的根地址及账号密码在主机文件配置中维护，MCP 不读取或管理密码。WebDAV 支持既有改名与批量改名流程，但不提供原子替换、权限编辑、链接或 SSH 名称搜索。远端复制遇到已有 WebDAV 目标时使用 `rename` 或 `skip`，不得绕过原子覆盖拒绝。网络中断或部分成功后先检查来源、目标和任务结果，不自动重放。
 
 ## Non-negotiable boundaries
 

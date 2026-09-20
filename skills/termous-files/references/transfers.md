@@ -36,6 +36,8 @@ Use `termous.files.transfers.download` to copy remote files or directories to an
 
 使用 `termous.files.transfers.remote_copy`，由 Termous Core 在两个远端文件会话之间流式复制。
 
+支持 SFTP、S3 / MinIO 与 WebDAV 的能力组合。目标是 WebDAV 且文件已存在时，`overwrite` 因缺少原子替换保证而拒绝；改用用户明确选择的 `rename` 或 `skip`，不要自行先删目标。上传的既有覆盖确认流程与远端复制的原子覆盖要求不同，不应承诺所有入口都能原子替换。
+
 1. 使用当前 MCP 客户端拥有的两个已连接会话，`file_session_id` 必须不同；允许相同 `host_id`。同一命名空间仍执行来源与目标路径重叠检查，不能复制到自身或来源目录内部。
 2. Pass the source identity as `source_file_session_id` and `source_connection_generation`, and the target identity as `target_file_session_id` and `target_connection_generation`.
 3. Use an existing absolute POSIX destination directory as `target_dir`. Show the exact source paths, destination directory, source and target hosts, and overwrite policy.
