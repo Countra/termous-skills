@@ -22,6 +22,8 @@ If that exact Session becomes unavailable, stop rather than discovering, connect
 
 ## Dispatch and read output
 
+派发复用原 PTY，Shell 选项会延续到人工输入。仅在自行设计一次性脚本且不需保留目录或环境变更时，可在冻结命令前显式使用子 Shell，例如 Bash 的 `(set -euo pipefail; printf '%s\n' 'probe')`。不得为绕过校验或改变用户指定命令而自动包装；需要保留当前 Shell 状态时按原意执行，并说明影响。
+
 1. Freeze the exact command and ordered SSH `session_id` values. Reject multiline commands locally; do not rewrite, wrap, escape, split, or append shell syntax to make a command pass validation.
 2. Confirm that `termous.commands.get` and `termous.commands.read_output` are available before dispatching, so the result can be verified.
 3. State the exact command and targets, then call `termous.commands.dispatch` with one stable `client_request_id`.

@@ -37,6 +37,8 @@ After either branch:
 5. Call `termous.commands.interrupt` only after the user explicitly asks to stop a running task. Acceptance is an interrupt request; poll before claiming completion.
 6. Call `termous.sessions.close` only with explicit user intent or requested cleanup.
 
+命令复用现有交互 Shell，`cd`、`export`、`set` 等状态会保留。自行编写一次性脚本时，将 `set -e` 等严格模式选项限定在显式子 Shell 内，避免遗留选项导致后续人工操作或 Tab 补全退出 Shell。用户指定的完整命令不得擅自包装或改写，也不要自动执行 `set +e` 改变用户设置。
+
 For exact cursors, idempotency, and connection states, read [references/tool-workflows.md](references/tool-workflows.md). For trust and error rules, read [references/safety-and-errors.md](references/safety-and-errors.md).
 
 ## Related Termous Skills
