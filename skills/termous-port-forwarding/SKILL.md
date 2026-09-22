@@ -7,7 +7,7 @@ description: Use Termous MCP to inspect saved forwarding profiles and Core-manag
 
 Use Termous MCP as the only interface to saved forwarding profiles and live forwarding instances. Do not open a separate SSH connection or recreate a forward with shell commands.
 
-SSH 引用失效后的用户操作是“在界面恢复连接或替换引用”。恢复连接由 Core 按原 SSH profile 创建新 ID 的 MCP 会话，就绪后受控换绑；不需要新增 MCP 工具，也不能由模型自行恢复、重放命令或继续已暂停的消息队列。本轮系统快照到达后才使用新 ID，历史任务仍保留原身份。文件 profile 引用不参与 SSH 恢复。
+If an SSH reference becomes unavailable, ask the user to restore the connection or replace the reference in the UI. Core restores the connection by creating an MCP session with a new ID from the original SSH profile and updating the binding only after the session is ready. This requires no additional MCP tool; the model must not restore the connection itself, replay commands, or resume a paused message queue. Use the new ID only after it appears in the current run's system snapshot. Existing tasks retain their original identities. File profile references do not participate in SSH recovery.
 
 ## Verified SSH resource binding
 

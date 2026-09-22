@@ -1,35 +1,35 @@
-# 删除工作流
+# Deletion workflow
 
-删除通过 `termous.files.delete.*` 工具进行，删除预览、启动、状态和结果需要独立的 `files:delete` 权限，取消需要 `files:cancel`。已有 `files:write` 不包含删除权限；缺少工具时提示在 Termous 中授权，不能改用 Shell 命令绕过。
+Use the `termous.files.delete.*` tools for deletion. Preview, start, status, and result tools require the separate `files:delete` scope; cancellation requires `files:cancel`. Existing `files:write` access does not include deletion permission. If a tool is missing, direct the user to grant the required scope in Termous rather than bypassing it with shell commands.
 
-WebDAV 同样复用此流程。服务端集合 DELETE 具有递归语义，删除前的空目录复核不能消除外部并发新增的窗口；不要宣称具备文件系统式的原子空目录删除保证。部分失败或结果不确定时检查明细，不自动重放。
+WebDAV uses this same workflow. A server-side collection DELETE is recursive, so checking that a directory is empty before deletion cannot eliminate the window for concurrent external additions. Do not claim filesystem-style atomic empty-directory deletion guarantees. Inspect the details after partial failure or an uncertain result; do not replay automatically.
 
-## 预览与启动
+## Preview and start
 
-1. 按普通 SFTP 流程确认当前客户端拥有的、已连接的文件会话，使用最新 `file_session_id` 和 `expected_connection_generation`。交互终端的 SSH 会话 ID 不能代替文件会话 ID。
-2. 将用户要求转换为明确的绝对 POSIX `paths`，保留原路径语义。路径不展开通配符或环境变量；禁止根目录、重复路径、父子重叠路径，不擅自加入相邻文件。
-3. 调用 `termous.files.delete.preview`，传入 `paths`、`recursive`、会话和连接代次。只有需要删除非空目录时才使用 `recursive=true`。
-4. 预览会扫描完整范围，再分页返回明细。按 `next_offset` 读取其余页面，确保各页 `plan_hash` 一致，不能把首页当作完整范围。扫描失败、超限或计划发生变化时停止，不提交删除。
-5. 向用户说明主机、顶层路径、递归选项、实际文件／目录／链接数量，以及直接删除无法撤销。符号链接只删除链接本身；父路径经过目录链接时，应让用户明确选择真实路径，不自行扩大范围。
-6. 使用同一份参数，将预览返回的 `plan_hash` 作为 `expected_plan_hash`，并使用一个稳定的 `client_request_id` 调用 `termous.files.delete.start`。默认由 Termous 原生审批；显式开启无需审批时仍执行权限与计划复核，不推断或改变该设置。
-7. 记录返回的任务 ID。审批通过或任务创建仅表示可以开始，不能报告已经删除完成。
+1. Follow the ordinary file-session workflow to confirm a connected file session owned by the current client. Use the current `file_session_id` and `expected_connection_generation`. An interactive terminal's SSH session ID cannot substitute for a file session ID.
+2. Translate the user's request into explicit absolute POSIX `paths` while preserving their meaning. Paths do not expand wildcards or environment variables. Reject the root directory, duplicate paths, and overlapping parent/child paths; do not add neighboring files without authorization.
+3. Call `termous.files.delete.preview` with `paths`, `recursive`, the session, and its connection generation. Use `recursive=true` only when deleting non-empty directories is required.
+4. Preview scans the complete scope and then returns details in pages. Follow `next_offset` to read the remaining pages and verify that every page has the same `plan_hash`. Never treat the first page as the complete scope. Stop without submitting deletion if scanning fails, a limit is exceeded, or the plan changes.
+5. Explain the host, top-level paths, recursive option, actual file/directory/link counts, and that direct deletion cannot be undone. For a symbolic link, delete only the link itself. If a parent path traverses a directory link, ask the user to select the real path explicitly rather than expanding the scope yourself.
+6. Keep the same arguments, pass the preview's `plan_hash` as `expected_plan_hash`, and call `termous.files.delete.start` with one stable `client_request_id`. Termous uses native approval by default. Explicit approval bypass still enforces permission and plan revalidation; do not infer or change that setting.
+7. Retain the returned task ID. Approval or task creation means only that execution may begin, not that deletion has completed.
 
-预览上限为 500 个顶层路径、10,000 个清单节点、256 层和 4 MiB 计划载荷；预览与执行前复核分别限时 30 秒。超限时明确报告并让用户缩小范围，不自动拆分成多次写操作规避限制。
+Preview limits are 500 top-level paths, 10,000 manifest nodes, 256 levels, and a 4 MiB plan payload. Preview and pre-execution revalidation each have a 30-second timeout. Report exceeded limits and ask the user to narrow the scope; do not automatically split the request into multiple mutations to bypass them.
 
-## 查询结果与取消
+## Inspect results and cancel
 
-- 通过 `termous.files.delete.get` 查询自有任务，直到 `completed`、`failed` 或 `cancelled`。
-- 通过 `termous.files.delete.result` 分页读取终态结果，报告 `deleted`、`failed`、`not_executed`、`uncertain` 数量及必要路径。`partial` 或 `uncertain` 不能省略。
-- 调用 `termous.files.delete.cancel` 只请求停止后续步骤；`cancel_requested=true` 不代表任务已结束或内容已经恢复。继续查询终态后报告实际结果。
-- 若当前客户端只有 `files:cancel` 而没有 `files:delete`，取消后无法调用状态或结果工具；仅报告已请求取消，并说明查看最终结果需要 `files:delete`，不推断实际删除范围。
-- AI 助手主动停止会取消该 Run/generation 发起的删除，已经完成的内容不会恢复。正常回答结束与主动停止不同，不要依赖结束回答来取消任务。
-- 删除途中新增的目录内容不会自动加入范围。遇到目录非空或来源变化，应报告冲突，不追加一轮递归删除。
+- Poll owned tasks through `termous.files.delete.get` until `completed`, `failed`, or `cancelled`.
+- Read final results in pages through `termous.files.delete.result`. Report counts for `deleted`, `failed`, `not_executed`, and `uncertain`, along with relevant paths. Never omit `partial` or `uncertain` outcomes.
+- Calling `termous.files.delete.cancel` only requests that subsequent steps stop. `cancel_requested=true` does not mean the task has ended or content has been restored. Continue querying the final state before reporting the actual result.
+- If the current client has `files:cancel` but not `files:delete`, it cannot call the status or result tools after cancellation. Report only that cancellation was requested and explain that inspecting the final result requires `files:delete`; do not infer what was deleted.
+- Explicitly stopping the AI assistant cancels deletions initiated by that run/generation, but does not restore completed deletions. Normal response completion differs from an explicit stop; do not rely on ending the response to cancel a task.
+- Directory contents added during deletion are not automatically included in the scope. Report a conflict if a directory is no longer empty or a source has changed; do not append another recursive deletion pass.
 
-## 失败与重试边界
+## Failure and retry boundaries
 
-- 拒绝、过期或取消的待审批请求不授权执行；不要自动重新申请。
-- 立即丢失启动响应时，只能用原请求 ID 和完全相同参数恢复既有请求，不能通过更换 ID 自动重试。
-- 计划变化需要重新预览和确认；不允许把新计划放入旧请求 ID。
-- 网络中断可能发生在远端已删除、响应尚未返回之间。遇到 `uncertain`，停止自动写入并检查相关路径，不能宣称没有执行。
-- 请求幂等和任务历史是有界内存记录，Core 重启后不自动重放。需要重新读取文件状态、预览范围，并取得新的操作授权。
-- SFTP 多路径操作不是原子事务，取消和失败都不提供回滚保证。
+- A rejected, expired, or cancelled pending approval does not authorize execution; do not automatically request approval again.
+- If the start response is immediately lost, recover the existing request only with the original request ID and identical arguments. Do not automatically retry under a different ID.
+- A changed plan requires a new preview and confirmation; never attach a new plan to an old request ID.
+- A network interruption may occur after remote deletion but before its response arrives. On `uncertain`, stop automatic writes and inspect the affected paths; do not claim that nothing executed.
+- Request idempotency and task history are bounded in-memory records. Do not automatically replay after Core restarts. Read the current file state, preview the scope again, and obtain fresh authorization for the operation.
+- Multi-path deletion operations are not atomic transactions. Neither cancellation nor failure guarantees rollback.

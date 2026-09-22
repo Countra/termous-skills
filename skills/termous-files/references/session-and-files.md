@@ -1,21 +1,21 @@
 # Session and file workflows
 
-单项重命名保持现有 `files.rename` 接口，目标必须不存在；来源在审批等待期间变化时需要重新检查。单项、批量及递归删除使用独立的 [删除工作流](deletion.md)，不能替换成重命名或 Shell 命令。
+Single-item rename uses the existing `files.rename` interface and requires the destination to be absent. Recheck the source if it changes while approval is pending. Single-item, batch, and recursive deletion use the separate [deletion workflow](deletion.md); do not substitute renames or shell commands.
 
-## 可信文件 profile 分支
+## Verified file profile branch
 
-系统提供 `TERMOUS_VERIFIED_RESOURCE` 且 `kind=file_profile`、`binding_mode=exact`、`state=ready` 时，使用块中的精确 `file_access_profile_id`；无需主机／profile 发现，也不得换成默认配置。`kind=ssh_session` 的块仅为 SSH 工具选路，不影响这个文件分支。
+When the system supplies `TERMOUS_VERIFIED_RESOURCE` with `kind=file_profile`, `binding_mode=exact`, and `state=ready`, use the exact `file_access_profile_id` in that block. Skip host/profile discovery and never substitute the default profile. A `kind=ssh_session` block routes SSH tools only and does not affect this file branch.
 
-1. 调用 `termous.files.sessions.list`，仅使用当前 MCP 客户端可见且拥有的文件会话，匹配精确 `file_access_profile_id`、`host_id`、`ssh_profile_id` 和 `engine`。
-2. 优先复用已连接且 ready 的匹配会话；已有匹配会话正在连接时查询 `termous.files.sessions.get`，等待主机信任时交给用户在 Termous 决定。没有可复用连接时调用 `termous.files.sessions.connect`，传入 `file_access_profile_id` 和稳定的 `client_request_id`，不传 `host_id`。
-3. 检查返回会话仍属于精确 profile，保留返回的 `file_session_id` 和最新 `connection_generation`；后续操作沿用权限、审批和代次检查。连接失败按稳定错误处理，不退回其他配置。
-4. 原桌面标签仅提供 profile 引用，不授予对其文件会话的所有权；关闭、断开或重连该标签不影响引用。profile 删除或身份归属变化时停止目标操作，提示用户替换或解除引用。
+1. Call `termous.files.sessions.list` and use only file sessions visible to and owned by the current MCP client, matching the exact `file_access_profile_id`, `host_id`, `ssh_profile_id`, and `engine`.
+2. Prefer a matching connected and ready session. If one is still connecting, poll `termous.files.sessions.get`; if it is waiting for Host Key trust, direct the user to decide in Termous. When no reusable connection exists, call `termous.files.sessions.connect` with `file_access_profile_id` and a stable `client_request_id`, without `host_id`.
+3. Verify that the returned session still belongs to the exact profile. Retain the returned `file_session_id` and latest `connection_generation`; subsequent operations retain permission, approval, and generation checks. Handle connection failures through the stable error contract rather than falling back to another profile.
+4. The original desktop tab provides only a profile reference, not ownership of its file session. Closing, disconnecting, or reconnecting that tab does not affect the reference. If the profile is deleted or its identity associations change, stop target operations and ask the user to replace or remove the reference.
 
-没有可信文件 profile 时才采用下面的普通发现流程。禁止把终端 `session_id` 或 `source_context.entity_id` 当作 `file_session_id`。同时存在两类引用时，两者可能指向不同主机，必须按工具所属领域选择。
+Use ordinary discovery below only when no verified file profile exists. Never treat a terminal `session_id` or `source_context.entity_id` as a `file_session_id`. When both reference kinds exist, they may point to different hosts; select the reference appropriate to the tool's domain.
 
 ## Resolve a host and create a file session
 
-S3 / MinIO、WebDAV、FTP / FTPS 与 SFTP 统一通过主机访问目录发现。S3、WebDAV 和 FTP 配置归属 `host_id`，但没有 SSH 传输依赖；使用明确的文件 Profile ID 或主机默认文件配置创建会话，不伪造 `ssh_profile_id`。WebDAV 和 FTP 的服务根路径映射为 `/`，所有文件工具继续使用工作区绝对路径。FTP 首版仅支持 UTF-8 名称，不跟随已识别的符号链接。
+Discover S3 / MinIO, WebDAV, FTP / FTPS, and SFTP through the same host access catalog. S3, WebDAV, and FTP profiles belong to a `host_id` but have no SSH transport dependency. Create sessions using an explicit file profile ID or the host's default file profile; never fabricate an `ssh_profile_id`. WebDAV and FTP service roots map to `/`, and all file tools continue to use absolute workspace paths. The initial FTP implementation supports only UTF-8 names and does not follow recognized symbolic links.
 
 1. Call `termous.hosts.list` and resolve the requested saved host to one exact `host_id`.
 2. Call `termous.hosts.access_profiles.list` with that Host. The catalog is a sanitized routing view. For a Host-only request, resolve the one file Profile marked `is_default` and retain `host_id` as the connect selector. For an explicit Profile request, resolve one exact `file_access_profile_id`. A current SFTP Profile also identifies its bound SSH Profile, but that binding is not an interchangeable selector.
@@ -36,7 +36,7 @@ S3 / MinIO、WebDAV、FTP / FTPS 与 SFTP 统一通过主机访问目录发现�
 - Reconnect preserves the File Session's exact file Profile and bound SSH Profile. Do not replace it with the Host defaults if those defaults changed after creation.
 - Use `termous.files.sessions.close` only when the user requests it or when a workflow explicitly requires cleanup. Re-list or get the session to verify the result.
 - Termous Desktop displays MCP-created file sessions as MCP-managed resources and may operate or close them. If a previously visible session becomes not found, re-list current sessions and report that it no longer exists; do not automatically recreate it.
-- Never substitute `termous.sessions.*` SSH tools. Interactive terminal sessions and SFTP file sessions have separate identities and lifecycles.
+- Never substitute `termous.sessions.*` SSH tools. Interactive terminal sessions and file sessions have separate identities and lifecycles.
 
 ## Browse and inspect files
 
@@ -66,4 +66,4 @@ Before calling `termous.files.save_text`, `termous.files.mkdir`, `termous.files.
 6. Termous requests native approval unless the client is explicitly configured to skip approvals. Rejection, expiry, or cancellation means no write was authorized; do not infer bypass from success alone.
 7. On success, `stat` or read the result only when verification is useful and the corresponding read scope is available.
 
-`termous.files.rename` 表达一个来源到一个精确目标的改名或同会话移动，目标已存在时拒绝覆盖。对缺少原生改名的存储，后端内部处理目录快照、条件复制及删除，审批会标注非原子执行；调用方不拆成自行发起的复制/删除，也不提交内部计划。失败或取消后保留相同请求 ID 查询结果，并检查两端，不自动重放修改。独立删除和复制继续使用各自工具、权限及审批流程。
+`termous.files.rename` renames or moves one source to one exact destination within the same session and rejects overwriting an existing destination. For storage without native rename, the backend handles directory snapshots, conditional copying, and deletion internally; the approval prompt identifies non-atomic execution. Callers must not split this into their own copy/delete requests or submit internal plans. After failure or cancellation, retain the same request ID when checking the result, inspect both ends, and do not automatically replay the mutation. Standalone deletion and copying continue to use their own tools, scopes, and approval workflows.

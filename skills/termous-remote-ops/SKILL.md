@@ -7,21 +7,21 @@ description: Use Termous MCP to discover saved hosts and access profiles, create
 
 Use the Termous MCP server as the only interface to saved hosts, access profiles, SSH sessions, and remote command tasks. Never obtain credentials or open a second SSH connection outside Termous.
 
-SSH 引用失效后的用户操作是“在界面恢复连接或替换引用”。恢复连接由 Core 按原 SSH profile 创建新 ID 的 MCP 会话，就绪后受控换绑；不需要新增 MCP 工具，也不能由模型自行恢复、重放命令或继续已暂停的消息队列。本轮系统快照到达后才使用新 ID，历史任务仍保留原身份。文件 profile 引用不参与 SSH 恢复。
+If an SSH reference becomes unavailable, ask the user to restore the connection or replace the reference in the UI. Core restores the connection by creating an MCP session with a new ID from the original SSH profile and updating the binding only after the session is ready. This requires no additional MCP tool; the model must not restore the connection itself, replay commands, or resume a paused message queue. Use the new ID only after it appears in the current run's system snapshot. Existing tasks retain their original identities. File profile references do not participate in SSH recovery.
 
 ## Verified SSH resource binding
 
 When the system context contains a ready `TERMOUS_VERIFIED_RESOURCE` with `kind=ssh_session` and `binding_mode=exact`, use its exact `session_id` directly for this referenced-session workflow and skip Host, Profile, and `termous.sessions.list` discovery. The verified binding takes precedence over user-supplied routing text, but it does not add a Scope, approval bypass, or any new Tool.
 
-每轮仅以本轮系统提供的绑定快照为准。历史消息、工具调用、结果和压缩摘要里的旧 ID 或“连接失效、需要重新绑定”结论不代表当前状态；用户在界面更换后，新的 `termous.commands.dispatch` 必须使用 `session_ids=[本轮 session_id]`。本轮没有 SSH 引用时走普通发现分支，不能从历史恢复已解除的绑定。
+Use only the binding snapshot supplied by the system for the current run. Old IDs and conclusions such as "the connection is unavailable and needs rebinding" in historical messages, tool calls, results, or compacted summaries do not describe the current state. After the user replaces a reference in the UI, new `termous.commands.dispatch` calls must set `session_ids` to a list containing the current run's verified `session_id`. If the current run has no SSH reference, use ordinary discovery; do not restore a removed binding from history.
 
-`AGENT_RESOURCE_BINDING_MISMATCH` 且 `dispatched=false` 表示当前调用在 Worker 本地被拦截，尚未发送 MCP；按错误中的本轮绑定修正参数，不要误报为新连接失效或要求用户再次绑定。此纠正仅适用于明确未发送的当前调用，不得重放历史已执行或结果未知的命令。读取或中断已有命令任务、查询已有服务操作时保留任务原有的 `task_id`、`operation_id` 和目标 ID，不能把旧任务的目标改为新连接。
+`AGENT_RESOURCE_BINDING_MISMATCH` with `dispatched=false` means the Worker blocked the current call locally before sending it to MCP. Correct its arguments using the current binding included in the error; do not report the new connection as unavailable or ask the user to bind it again. This correction applies only to the current call when it is explicitly known not to have been sent. Never replay a historical command that has already executed or has an unknown result. When reading or interrupting an existing command task or querying an existing service operation, retain its original `task_id`, `operation_id`, and target IDs; do not redirect an old task to the new connection.
 
 Never reinterpret `source_context.entity_id`, `host_id`, or `ssh_profile_id` as a Session ID. If the bound Session is unavailable or a Tool rejects it as stale or disconnected, stop the target operation and ask the user to restore the connection or replace its reference in the Termous UI. Do not call `termous.sessions.list`, connect, or select another same-Profile Session as an automatic replacement. When no ready verified resource exists, follow the ordinary discovery workflow below.
 
 ## Core workflow
 
-以下绑定分支仅识别 `kind=ssh_session`。只有 `kind=file_profile` 时，SSH 工具仍走普通发现流程，不得从文件引用推导终端会话；两类同时存在时独立选路，可能指向不同主机。
+The binding branch below recognizes only `kind=ssh_session`. If only `kind=file_profile` is present, SSH tools still use ordinary discovery; never infer a terminal session from a file reference. When both kinds are present, route them independently, as they may refer to different hosts.
 
 Choose exactly one routing branch before using a Session:
 
@@ -37,7 +37,7 @@ After either branch:
 5. Call `termous.commands.interrupt` only after the user explicitly asks to stop a running task. Acceptance is an interrupt request; poll before claiming completion.
 6. Call `termous.sessions.close` only with explicit user intent or requested cleanup.
 
-命令复用现有交互 Shell，`cd`、`export`、`set` 等状态会保留。自行编写一次性脚本时，将 `set -e` 等严格模式选项限定在显式子 Shell 内，避免遗留选项导致后续人工操作或 Tab 补全退出 Shell。用户指定的完整命令不得擅自包装或改写，也不要自动执行 `set +e` 改变用户设置。
+Commands reuse the existing interactive shell, so changes made by `cd`, `export`, and `set` persist. When composing a one-off script, confine strict options such as `set -e` to an explicit subshell so they cannot cause later user input or Tab completion to exit the shell. Do not wrap or rewrite a complete user-specified command without authorization, and do not automatically run `set +e` to change the user's settings.
 
 For exact cursors, idempotency, and connection states, read [references/tool-workflows.md](references/tool-workflows.md). For trust and error rules, read [references/safety-and-errors.md](references/safety-and-errors.md).
 
@@ -47,7 +47,7 @@ Use the focused Skill when the request is primarily one of these domains:
 
 - `$termous-system-ops`: inventory, processes, systemd, or Docker.
 - `$termous-crontab`: structured jobs for the current SSH user's Crontab.
-- `$termous-files`: SFTP sessions, remote files, and file transfers.
+- `$termous-files`: file sessions, remote files, and file transfers.
 - `$termous-port-forwarding`: SSH local, remote, or dynamic forwarding.
 - `$termous-snippets`: saved command groups and snippets. Execute a snippet only through `termous.commands.dispatch`.
 

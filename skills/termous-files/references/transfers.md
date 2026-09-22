@@ -4,7 +4,7 @@
 
 1. Resolve every source and target to an exact MCP-owned `file_session_id`.
 2. Refresh each file session with `termous.files.sessions.get` immediately before requesting the transfer and retain its current `connection_generation`.
-3. For downloads and remote copies, inspect every remote source with `stat`. Upload sources are Core-local paths and are validated by Termous during grant creation and again immediately before execution; do not try to inspect them with an SFTP tool.
+3. For downloads and remote copies, inspect every remote source with `stat`. Upload sources are Core-local paths and are validated by Termous during grant creation and again immediately before execution; do not try to inspect them with a remote file tool.
 4. Choose one explicit overwrite policy:
    - `rename`: preserve existing items by selecting a new target name;
    - `skip`: leave existing targets unchanged and report skipped items;
@@ -16,7 +16,7 @@
 
 Use `termous.files.transfers.upload` to copy local files or directories from the machine running Termous Core to one remote file session.
 
-FTP / FTPS 覆盖上传仅在明确确认后执行非原子的版本复核与暂存发布；失败或取消可能留下不确定结果，不能通过重新创建任务自动重放。
+FTP / FTPS overwrite uploads perform non-atomic version revalidation and staged publication only after explicit confirmation. Failure or cancellation may leave an uncertain result; do not automatically replay the upload by creating another task.
 
 1. Confirm that every local path is absolute and is exactly what the user requested.
 2. Explain that these paths refer to the Termous Core machine. Do not silently reinterpret paths from the MCP client's machine.
@@ -34,13 +34,13 @@ Use `termous.files.transfers.download` to copy remote files or directories to an
 4. Call the download tool. Termous requests native approval unless the client is explicitly configured to skip approvals. When a decision is required, do not treat an MCP-side confirmation as a substitute.
 5. Never claim that the local files exist until the transfer task reaches a successful final state.
 
-## 远端文件会话间复制
+## Copy between remote file sessions
 
-使用 `termous.files.transfers.remote_copy`，由 Termous Core 在两个远端文件会话之间流式复制。
+Use `termous.files.transfers.remote_copy` to stream data through Termous Core between two remote file sessions.
 
-支持 SFTP、S3 / MinIO、WebDAV 与 FTP / FTPS 的能力组合。目标是 WebDAV 或 FTP 且文件已存在时，`overwrite` 因缺少原子替换保证而拒绝；改用用户明确选择的 `rename` 或 `skip`，不要自行先删目标。上传的既有覆盖确认流程与远端复制的原子覆盖要求不同，不应承诺所有入口都能原子替换。
+Supported combinations of SFTP, S3 / MinIO, WebDAV, and FTP / FTPS depend on their capabilities. If a target file already exists on WebDAV or FTP, `overwrite` is rejected because atomic replacement is not guaranteed. Use `rename` or `skip` as explicitly selected by the user; do not delete the target first. The existing upload overwrite-confirmation workflow differs from the atomic-overwrite requirement for remote copies. Do not promise atomic replacement through every entry point.
 
-1. 使用当前 MCP 客户端拥有的两个已连接会话，`file_session_id` 必须不同；允许相同 `host_id`。同一命名空间仍执行来源与目标路径重叠检查，不能复制到自身或来源目录内部。
+1. Use two connected sessions owned by the current MCP client. Their `file_session_id` values must differ, but their `host_id` values may be the same. Source/target overlap checks still apply within the same namespace; never copy an item onto itself or into its source directory.
 2. Pass the source identity as `source_file_session_id` and `source_connection_generation`, and the target identity as `target_file_session_id` and `target_connection_generation`.
 3. Use an existing absolute POSIX destination directory as `target_dir`. Show the exact source paths, destination directory, source and target hosts, and overwrite policy.
 4. Call the tool once. Termous requests native approval unless the client is explicitly configured to skip approvals. Do not emulate this operation with a local download followed by an upload.

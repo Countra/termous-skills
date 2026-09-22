@@ -363,8 +363,8 @@ def validate_verified_resource_guidance(documents: dict[str, str], errors: list[
             "TERMOUS_VERIFIED_RESOURCE",
             "source_context.entity_id",
             "termous.sessions.list",
-            "在界面恢复连接或替换引用",
-            "不需要新增 MCP 工具",
+            "restore the connection or replace the reference in the UI",
+            "requires no additional MCP tool",
         ):
             if required not in content:
                 errors.append(
@@ -377,11 +377,11 @@ def validate_verified_resource_guidance(documents: dict[str, str], errors: list[
         "skip the entire Host/Profile/session discovery and connect branch",
         "Unbound discovery branch:",
         "only when no ready verified resource exists",
-        "只有 `kind=file_profile` 时，SSH 工具仍走普通发现流程",
-        "每轮仅以本轮系统提供的绑定快照为准",
+        "If only `kind=file_profile` is present, SSH tools still use ordinary discovery",
+        "Use only the binding snapshot supplied by the system for the current run",
         "AGENT_RESOURCE_BINDING_MISMATCH",
         "dispatched=false",
-        "不得重放历史已执行或结果未知的命令",
+        "Never replay a historical command that has already executed or has an unknown result",
     ):
         if required not in remote_ops:
             errors.append(
@@ -400,9 +400,9 @@ def validate_verified_resource_guidance(documents: dict[str, str], errors: list[
         "TERMOUS_VERIFIED_RESOURCE", "kind=file_profile", "kind=ssh_session",
         "file_access_profile_id", "file_session_id", "connection_generation",
         "termous.files.sessions.list", "termous.files.sessions.connect",
-        "当前 MCP 客户端", "原桌面", "替换或解除引用",
-        "`file_access_profile_id`、`host_id`、`ssh_profile_id` 和 `engine` 全部匹配",
-        "不得重复连接",
+        "current MCP client", "original desktop", "replace or remove the reference",
+        "`file_access_profile_id`, `host_id`, `ssh_profile_id`, and `engine` all match",
+        "rather than creating a duplicate connection",
     ):
         if required not in files:
             errors.append(f"termous-files: 可信文件 profile 分支必须说明 {required}")

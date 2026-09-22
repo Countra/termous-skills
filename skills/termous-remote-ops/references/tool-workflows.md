@@ -6,7 +6,7 @@ If the system context supplies a ready exact `TERMOUS_VERIFIED_RESOURCE` for `ki
 
 If that exact Session becomes unavailable, stop rather than discovering, connecting, or substituting another Session. The user must restore the connection or replace its reference in the Termous UI before target work resumes.
 
-界面已替换绑定后，下轮系统快照中的新 `session_id` 覆盖历史路由结论；无需用户在聊天中手写新 ID。Worker 的 `AGENT_RESOURCE_BINDING_MISMATCH`、`dispatched=false` 是执行前参数错误，可使用返回的本轮目标纠正当前调用；只有本轮精确目标实际不可用时才需要再次替换或解除引用。保留命令正文，不重放此前已发送、已执行或结果未知的命令。`commands.read_output`、`commands.interrupt` 及服务操作查询继续使用其任务原有身份，不重定向历史任务。
+After a binding is replaced in the UI, the new `session_id` in the next run's system snapshot takes precedence over historical routing conclusions; the user does not need to type the new ID in chat. The Worker's `AGENT_RESOURCE_BINDING_MISMATCH` with `dispatched=false` is an argument error detected before execution. Correct the current call using the current run's target returned in the error. Ask the user to replace or remove the reference again only if that exact target is actually unavailable. Preserve the command text, and do not replay commands that were previously sent, executed, or left with an unknown result. `commands.read_output`, `commands.interrupt`, and service-operation queries must retain each task's original identity rather than redirect historical tasks.
 
 ## Host, access Profile, and session discovery
 
@@ -22,7 +22,7 @@ If that exact Session becomes unavailable, stop rather than discovering, connect
 
 ## Dispatch and read output
 
-派发复用原 PTY，Shell 选项会延续到人工输入。仅在自行设计一次性脚本且不需保留目录或环境变更时，可在冻结命令前显式使用子 Shell，例如 Bash 的 `(set -euo pipefail; printf '%s\n' 'probe')`。不得为绕过校验或改变用户指定命令而自动包装；需要保留当前 Shell 状态时按原意执行，并说明影响。
+Dispatch reuses the original PTY, so shell options also affect subsequent user input. When composing a one-off script that does not need to preserve directory or environment changes, an explicit subshell may be chosen before freezing the command, for example Bash's `(set -euo pipefail; printf '%s\n' 'probe')`. Do not automatically wrap a command to bypass validation or alter a user-specified command. When shell state must persist, execute the command as intended and explain its effects.
 
 1. Freeze the exact command and ordered SSH `session_id` values. Reject multiline commands locally; do not rewrite, wrap, escape, split, or append shell syntax to make a command pass validation.
 2. Confirm that `termous.commands.get` and `termous.commands.read_output` are available before dispatching, so the result can be verified.
