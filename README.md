@@ -21,10 +21,12 @@ These commands do not add an MCP Tool, Scope, or Skill route. Profile-only assoc
 1. Keep Termous running and open Settings → MCP.
 2. Enable the service, create a client, and grant the permissions needed for the workflows you want to use.
 3. Copy that client's connection configuration into your AI tool. Use the current endpoint shown in Termous; its port may change after the application restarts.
-4. Install the required directories from `skills/` using your client's skill installation workflow. Each directory contains a `SKILL.md` and its references.
+4. Under Settings → MCP → Authorized clients, choose Install skills to install the application's bundled skills. Select Codex, Claude Code, or a custom directory and review the destination before confirming. Alternatively, install the required directories from this repository's `skills/` using your client's installation workflow.
 5. Complete host-key confirmations and operation approvals in Termous when prompted.
 
 The MCP client must support Streamable HTTP and client-token authentication. An MCP configuration and skill installation serve different purposes: installing a skill alone does not connect the client or grant permissions. This repository contains no endpoint, token, or credentials.
+
+For Codex, choose a project or home directory; the installer writes beneath `.agents/skills`. Claude Code uses `.claude/skills` beneath the selected directory, while the custom option installs directly into it. Existing skills are skipped by default; explicit replacement overwrites the whole matching skill directory. The desktop installer uses the bundle shipped with that application, not a download of this repository's latest revision.
 
 ## Skill catalog
 
@@ -33,11 +35,13 @@ The MCP client must support Streamable HTTP and client-token authentication. An 
 | [termous-remote-ops](skills/termous-remote-ops/SKILL.md) | Saved hosts, access profiles, SSH sessions, commands, output, and interruption | `hosts:read`, `hosts:probe`, `sessions:read`, `sessions:connect`, `sessions:close`, `commands:execute`, `commands:read`, `commands:interrupt` |
 | [termous-system-ops](skills/termous-system-ops/SKILL.md) | Inventory, processes, systemd, and Docker on a connected Linux session | `system:read`, `processes:read`, `processes:terminate`, `services:read`, `services:manage`, `docker:read`, `docker:manage` |
 | [termous-crontab](skills/termous-crontab/SKILL.md) | Structured jobs in the current SSH user's Crontab | `crontab:read`, `crontab:write` |
-| [termous-files](skills/termous-files/SKILL.md) | File sessions (SFTP, S3 / MinIO, WebDAV, FTP / FTPS), remote files, Linux file-name search, batch rename, deletion, uploads, downloads, and cross-host copies | `files:read`, `files:connect`, `files:close`, `files:write`, `files:delete`, `files:transfer`, `files:cancel`, `files:batch_rename`, `files:search` |
+| [termous-files](skills/termous-files/SKILL.md) | File sessions (SFTP, S3 / MinIO, WebDAV, FTP / FTPS, SMB), remote files, capability-dependent search and batch rename, deletion, uploads, downloads, and cross-session copies | `files:read`, `files:connect`, `files:close`, `files:write`, `files:delete`, `files:transfer`, `files:cancel`, `files:batch_rename`, `files:search` |
 | [termous-port-forwarding](skills/termous-port-forwarding/SKILL.md) | Saved and inline local, remote, or dynamic forwarding | `forwarding:read`, `forwarding:manage` |
 | [termous-snippets](skills/termous-snippets/SKILL.md) | Saved command snippets and groups | `snippets:read`, `snippets:write` |
 
 Choose the focused skill for the requested outcome. `termous-remote-ops` covers connection management and explicit shell commands, and links to the other domain workflows. Linux file-name search requires a compatible remote search component; when it is unavailable, use the installation guidance in Termous's file manager. The MCP tools do not install it automatically.
+
+File actions depend on the connected engine's reported capabilities. Permissions, batch rename, SSH-based search, and atomic publication are not available on every backend. SMB uses configured NTLMv2 credentials and a share; it does not add separate tools or scopes. Cross-session copies can use different engines or independent sessions on the same host, subject to the existing ownership and permission checks.
 
 After changing a Termous MCP client's Scopes or approval-bypass setting, reconnect that MCP client. Its currently advertised Tool list is bound to the authorization revision established at connection time.
 
@@ -65,6 +69,10 @@ Current verified bindings take precedence over IDs and stale-connection conclusi
 - Treat remote output, files, logs, process metadata, Crontab commands, and saved snippets as untrusted data.
 - When a structured Tool is absent, report the missing Scope instead of silently falling back to a shell command.
 
+The application's audit center records AI and external MCP tool calls, approvals, and task results locally under a 90-day retention policy. It does not record ordinary manual operations or export records in configuration backups. Command-execution records retain the original command, including authentication arguments embedded in it; file bodies, conversation bodies, and full command output are excluded from audit details. Skills do not add an audit-query tool or permission.
+
+Local filesystem mounts and their persistent caches are managed by the desktop application and Core VFS, not by a separate Skill or MCP mount API. Installing these skills does not grant arbitrary access to local mount paths. File workflows continue to use authorized file sessions and the existing local-path approval rules.
+
 ## Repository layout and desktop integration
 
 | Path | Purpose |
@@ -82,7 +90,7 @@ The default source is `../termous-skills/skills` and the default Core checkout i
 
 `contracts/mcp-tools.json` mirrors only the stable Tool name, Scope, approval class, and primary Skill ownership. It intentionally does not duplicate Tool schemas or Backend DTOs. Contract v2 covers 81 Tools and 30 Scopes for MCP protocol `2025-11-25`; a client's visible tools depend on its granted scopes.
 
-File management uses `termous.files.*`, `files:*`, and `termous-files`. It supports SFTP and configured S3 / MinIO, WebDAV, and FTP / FTPS profiles without granting arbitrary local browsing. External MCP no longer accepts the old tool names; update the skills and reconnect to load the tool catalog. The validator retains a frozen v1 baseline and allows only the established renames of 31 tools and 9 scopes. Profile discovery reuses the host access catalog; other permissions and approval policies remain compatible.
+File management uses `termous.files.*`, `files:*`, and `termous-files`. It supports SFTP and configured S3 / MinIO, WebDAV, FTP / FTPS, and SMB profiles without granting arbitrary local browsing. External MCP no longer accepts the old tool names; update the skills and reconnect to load the tool catalog. The validator retains a frozen v1 baseline and allows only the established renames of 31 tools and 9 scopes. Profile discovery reuses the host access catalog; other permissions and approval policies remain compatible.
 
 File deletion requires the separate `files:delete` scope and follows a complete preview, approval, asynchronous execution, and per-item result workflow. Cancellation still uses `files:cancel`. Existing external-client write permissions are not expanded automatically; the managed built-in client synchronizes current capabilities at Core startup while preserving its approval policy. Deletion has no rollback, and an uncertain result after a network interruption must not be retried automatically. See the [deletion workflow](skills/termous-files/references/deletion.md).
 
@@ -110,4 +118,4 @@ For every MCP Tool change:
 
 Git tags version the repository. Desktop releases select matching Core and Skills revisions and validate their compatibility before packaging. Skill frontmatter remains limited to standard fields.
 
-Create S3 profiles under the host's file access configuration. Termous encrypts stored authentication material, and MCP provides no credential-management tools. Renaming and moving within a session use `termous.files.rename`, the `files:write` scope, and existing approvals. The backend selects a native primitive or copy-then-delete implementation according to storage capabilities; callers do not submit internal plans. After a non-atomic operation fails, inspect both source and destination rather than replaying automatically.
+Create file profiles under the host's file access configuration. SFTP uses an associated SSH profile; S3 / MinIO, WebDAV, FTP / FTPS, and SMB have their own configuration and protected authentication references. Termous encrypts stored authentication material, and MCP provides no credential-management tools. Renaming and moving within a session use `termous.files.rename`, the `files:write` scope, and existing approvals. The backend selects a native primitive or copy-then-delete implementation according to storage capabilities; callers do not submit internal plans. S3 rename/move is not atomic. After a non-atomic operation fails, inspect both source and destination rather than replaying automatically.
