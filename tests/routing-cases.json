@@ -1,6 +1,14 @@
 {
   "schema_version": 1,
   "cases": [
+    { "kind": "direct", "prompt": "Termous 安装在哪，版本是多少？只查询，不要启动。", "expected_skills": ["termous-desktop"] },
+    { "kind": "direct", "prompt": "检查本机 Windows 的 Termous 是否已运行，没有运行就帮我启动。", "expected_skills": ["termous-desktop"] },
+    { "kind": "direct", "prompt": "MCP 连不上，先检查我的 Termous 是否在后台或托盘运行，不要修改配置。", "expected_skills": ["termous-desktop"] },
+    { "kind": "direct", "prompt": "Check the installed Termous version and executable path on Windows without launching it.", "expected_skills": ["termous-desktop"] },
+    { "kind": "direct", "prompt": "两个 Windows 安装范围都有 Termous，确认当前账户优先使用哪个安装。", "expected_skills": ["termous-desktop"] },
+    { "kind": "ambiguous", "prompt": "能帮我看看 Termous 启动了没有？如果没有，先告诉我。", "expected_skills": ["termous-desktop"] },
+    { "kind": "cross-domain", "prompt": "本机 Termous 没打开就启动它，再用已配置的 MCP 列出我的 SSH 会话；不要读取令牌或扫描端口。", "expected_skills": ["termous-desktop", "termous-remote-ops"] },
+    { "kind": "negative", "prompt": "启动本机 Chrome 并列出所有软件的启动项。", "expected_skills": [] },
     { "kind": "direct", "prompt": "在 Termous 中浏览已保存的 MinIO 配置并为一个对象改名", "expected_skills": ["termous-files"] },
     {
       "kind": "direct",

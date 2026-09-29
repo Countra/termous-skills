@@ -37,7 +37,9 @@ ALLOWED_FRONTMATTER = {"name", "description", "license", "allowed-tools", "metad
 ALLOWED_APPROVALS = {"none", "per-call"}
 ROUTING_KINDS = {"direct", "cross-domain", "ambiguous", "negative"}
 EXPECTED_CONTRACT_VERSION = 2
-EXPECTED_SKILL_COUNT = 6
+EXPECTED_SKILL_COUNT = 7
+# 本机软件发现不依赖 MCP，也不能为了归属校验虚构工具或权限。
+LOCAL_ONLY_SKILLS = {"termous-desktop"}
 EXPECTED_TOOL_COUNT = 92
 EXPECTED_SCOPE_COUNT = 36
 LEGACY_TOOL_COUNT = 75
@@ -588,13 +590,16 @@ def main() -> int:
     skill_names = {name for path in skill_dirs if (name := validate_skill(path, errors)) is not None}
     if len(skill_names) != EXPECTED_SKILL_COUNT:
         errors.append(f"expected {EXPECTED_SKILL_COUNT} Skill directories, found {len(skill_names)}")
-    if skill_names != contract_owners:
-        missing = sorted(contract_owners - skill_names)
-        extra = sorted(skill_names - contract_owners)
+    expected_skills = contract_owners | LOCAL_ONLY_SKILLS
+    if skill_names != expected_skills:
+        missing = sorted(expected_skills - skill_names)
+        extra = sorted(skill_names - expected_skills)
         if missing:
             errors.append(f"missing Skill directories: {', '.join(missing)}")
         if extra:
-            errors.append(f"Skills without Tool ownership: {', '.join(extra)}")
+            errors.append(f"Skills without Tool ownership or local registration: {', '.join(extra)}")
+    if contract_owners & LOCAL_ONLY_SKILLS:
+        errors.append("local-only Skills must not own MCP Tools")
 
     documents: dict[str, str] = {}
     for skill_dir in skill_dirs:

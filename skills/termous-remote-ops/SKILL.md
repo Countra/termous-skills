@@ -45,6 +45,7 @@ For exact cursors, idempotency, and connection states, read [references/tool-wor
 
 Use the focused Skill when the request is primarily one of these domains:
 
+- `$termous-desktop`: local Windows installation information, running state, and application launch when requested, using the external client's local capabilities rather than SSH.
 - `$termous-system-ops`: inventory, processes, systemd, or Docker.
 - `$termous-crontab`: structured jobs for the current SSH user's Crontab.
 - `$termous-files`: file sessions, remote files, and file transfers.
@@ -65,4 +66,4 @@ This routing list is guidance, not a permission change. Always use the tools adv
 - Do not hide `gap`, `truncated`, `completed_unknown`, `uncertain`, or disconnected states.
 - Never silently replace a missing structured-domain Skill or Tool with an arbitrary shell command.
 
-If the MCP endpoint is unavailable or a session waits for Host Key trust, direct the user to Termous MCP settings or the native trust prompt and stop.
+An unavailable MCP endpoint does not mean Termous is not running. When the user asks to inspect or launch the local application, use the installed `$termous-desktop` Skill if available; never send local commands to SSH. If the application is running but its endpoint is unavailable, ask the user to check Termous MCP settings. A session awaiting Host Key trust still requires the user to handle the native prompt.

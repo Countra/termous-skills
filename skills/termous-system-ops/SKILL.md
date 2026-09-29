@@ -18,7 +18,7 @@ When the system context contains a ready exact `TERMOUS_VERIFIED_RESOURCE` for `
 1. Inspect the tools advertised by the current MCP connection and confirm the required read or manage Scope is present.
 2. Use the ready verified binding when present; otherwise resolve one exact connected Linux SSH `session_id`. Never infer the current, selected, or focused Termous tab.
 3. Read the current capability or resource state before acting. Treat capability responses as session-specific snapshots, not permanent host facts.
-4. 变更前明确唯一的进程、服务 Unit、容器、镜像、数据卷或网络，说明预期操作。删除数据卷必须明确说明会删除卷内数据。
+4. Before a mutation, identify one exact process, service Unit, container, image, volume, or network and explain the intended action. Before removing a volume, explicitly state that its data will be deleted.
 5. Use one stable `client_request_id` for the logical mutation. Termous applies its native approval policy and revalidates sensitive targets before execution.
 6. Verify the returned state with the corresponding structured read Tool. Report uncertainty, truncation, warnings, and unavailable capabilities without hiding them.
 
@@ -26,7 +26,7 @@ Read only the reference needed for the current task:
 
 - Inventory or process work: [references/inventory-and-processes.md](references/inventory-and-processes.md)
 - systemd services or journal logs: [references/systemd.md](references/systemd.md)
-- Docker 容器、镜像、数据卷、网络、统计和日志：[references/docker.md](references/docker.md)
+- Docker containers, images, volumes, networks, stats, and logs: [references/docker.md](references/docker.md)
 - Any mutation, approval, error, or sensitive output: [references/safety-and-errors.md](references/safety-and-errors.md)
 
 ## Non-negotiable boundaries

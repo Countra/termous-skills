@@ -1,6 +1,6 @@
 # Termous Skills
 
-Termous Skills provide six focused workflows for the Termous MCP server, covering SSH commands, system operations, scheduled tasks, files, port forwarding, and snippets. The built-in Termous AI assistant includes these skills, and external AI clients can install them separately. Skills contain instructions and references; Termous supplies the connections, tools, permissions, and approvals.
+Termous Skills provide six focused workflows for the Termous MCP server, covering SSH commands, system operations, scheduled tasks, files, port forwarding, and snippets, plus a Windows desktop discovery and launch workflow. The built-in Termous AI assistant includes the skill bundle, and external AI clients can install skills separately. Skills contain instructions and references; Termous supplies the MCP connections, tools, permissions, and approvals. Local desktop operations require the external client's own local execution capability.
 
 ## Using the skills
 
@@ -32,6 +32,7 @@ For Codex, choose a project or home directory; the installer writes beneath `.ag
 
 | Skill | Use it for | Primary Scopes |
 | --- | --- | --- |
+| [termous-desktop](skills/termous-desktop/SKILL.md) | Windows installation information, version, executable path, running state, and launch when requested | No MCP Scope; uses the external client's local PowerShell |
 | [termous-remote-ops](skills/termous-remote-ops/SKILL.md) | Saved hosts, access profiles, SSH sessions, commands, output, and interruption | `hosts:read`, `hosts:probe`, `sessions:read`, `sessions:connect`, `sessions:close`, `commands:execute`, `commands:read`, `commands:interrupt` |
 | [termous-system-ops](skills/termous-system-ops/SKILL.md) | Inventory, processes, systemd, and Docker on a connected Linux session | `system:read`, `processes:read`, `processes:terminate`, `services:read`, `services:manage`, `docker:read`, `docker:manage` |
 | [termous-crontab](skills/termous-crontab/SKILL.md) | Structured jobs in the current SSH user's Crontab | `crontab:read`, `crontab:write` |
@@ -41,11 +42,13 @@ For Codex, choose a project or home directory; the installer writes beneath `.ag
 
 Choose the focused skill for the requested outcome. `termous-remote-ops` covers connection management and explicit shell commands, and links to the other domain workflows. Linux file-name search requires a compatible remote search component; when it is unavailable, use the installation guidance in Termous's file manager. The MCP tools do not install it automatically.
 
+`termous-desktop` works without MCP being online. It queries `HKCU\Software\Termous\Install` in the 64-bit registry view and falls back to HKLM when no valid record exists, then validates the installation paths and checks processes in the current Windows session. It launches once only when explicitly requested, does not relaunch when a matching process exists, and does not terminate processes or retry automatically when the state is unknown. Older installers may lack discovery records and require an upgrade to an installer that provides this entry. Neither installation discovery nor launch grants MCP permissions. The built-in AI assistant cannot perform this workflow without local execution capabilities and must not substitute remote SSH execution.
+
 File actions depend on the connected engine's reported capabilities. Permissions, batch rename, SSH-based search, and atomic publication are not available on every backend. SMB uses configured NTLMv2 credentials and a share; it does not add separate tools or scopes. Cross-session copies can use different engines or independent sessions on the same host, subject to the existing ownership and permission checks.
 
 After changing a Termous MCP client's Scopes or approval-bypass setting, reconnect that MCP client. Its currently advertised Tool list is bound to the authorization revision established at connection time.
 
-Docker 指引覆盖容器、镜像、数据卷和网络。新增资源分别使用 `docker:images:read/manage`、`docker:volumes:read/manage`、`docker:networks:read/manage` 六项权限；旧容器权限不扩大，管理不隐含读取。资源写操作沿用原生审批与幂等，删除数据卷需明确数据影响。工具清单共 92 项、权限共 36 项，详细参数和边界见 [Docker 指引](skills/termous-system-ops/references/docker.md)。
+Docker guidance covers containers, images, volumes, and networks. Images, volumes, and networks use six separate Scopes: `docker:images:read/manage`, `docker:volumes:read/manage`, and `docker:networks:read/manage`. Existing container permissions are unchanged, and manage Scopes do not imply read access. Resource mutations retain native approval and idempotency; volume removal requires an explicit explanation of data loss. The catalog contains 92 tools and 36 Scopes. See the [Docker guide](skills/termous-system-ops/references/docker.md) for parameters and boundaries.
 
 ## Hosts and session selection
 
@@ -79,7 +82,7 @@ Local filesystem mounts and their persistent caches are managed by the desktop a
 
 | Path | Purpose |
 | --- | --- |
-| `skills/` | Six skill directories, their references, and client metadata |
+| `skills/` | Seven skill directories, their references, and client metadata |
 | [contracts/mcp-tools.json](contracts/mcp-tools.json) | Tool names, scopes, approval classes, and owning skills |
 | [tests/routing-cases.json](tests/routing-cases.json) | Direct, cross-domain, ambiguous, and negative routing cases |
 | [scripts/validate_skills.py](scripts/validate_skills.py) | Skill validation and optional comparison with Termous Core |
@@ -90,7 +93,7 @@ The default source is `../termous-skills/skills` and the default Core checkout i
 
 ## Maintaining MCP coverage
 
-`contracts/mcp-tools.json` 保存稳定工具名、权限（含共享探测的替代读取权限）、审批类型和归属 Skill，不复制工具 Schema 或后端 DTO。合同 v2 覆盖 MCP 协议 `2025-11-25` 的 92 项工具和 36 项权限；实际可见工具由客户端授权决定。
+`contracts/mcp-tools.json` records stable tool names, Scopes (including alternative read Scopes for shared probes), approval classes, and owning Skills without duplicating tool schemas or backend DTOs. Contract v2 covers 92 tools and 36 Scopes for MCP protocol `2025-11-25`; client authorization determines which tools are actually advertised.
 
 File management uses `termous.files.*`, `files:*`, and `termous-files`. It supports SFTP and configured S3 / MinIO, WebDAV, FTP / FTPS, and SMB profiles without granting arbitrary local browsing. External MCP no longer accepts the old tool names; update the skills and reconnect to load the tool catalog. The validator retains a frozen v1 baseline and allows only the established renames of 31 tools and 9 scopes. Profile discovery reuses the host access catalog; other permissions and approval policies remain compatible.
 
@@ -104,6 +107,8 @@ python -B scripts/validate_skills.py
 python -B -m unittest discover -s tests -p "test_*.py"
 ```
 
+Windows workflow tests load the actual PowerShell functions from the Skill reference and replace registry, process, launch, and wait interfaces with in-memory mocks. They do not read real installation information or launch the application. Windows CI tests the available Windows PowerShell and PowerShell 7 interpreters. Other platforms skip this dedicated test while still validating all seven Skills, routing cases, and MCP contracts.
+
 When the Termous Backend is available in the adjacent workspace, also compare the contract with its Go registries, Scope constants, and MCP protocol version:
 
 ```text
@@ -115,7 +120,7 @@ For every MCP Tool change:
 1. Update `contracts/mcp-tools.json` and assign one primary Skill.
 2. Update that Skill's workflow and safety references.
 3. Add or revise a realistic case in `tests/routing-cases.json`.
-4. Run repository validation and the official Skill `quick_validate.py` for all six Skill directories.
+4. Run repository validation and the official Skill `quick_validate.py` for all seven Skill directories.
 5. Forward-test direct, negative, and cross-domain prompts before creating a Git tag.
 
 Git tags version the repository. Desktop releases select matching Core and Skills revisions and validate their compatibility before packaging. Skill frontmatter remains limited to standard fields.

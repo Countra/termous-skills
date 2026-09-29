@@ -1,4 +1,4 @@
-# Docker 资源管理
+# Docker Resource Management
 
 Use these tools only with an exact connected Linux SSH `session_id`.
 
@@ -51,28 +51,28 @@ Workflow:
 
 Do not choose a container from a partial name alone when more than one result matches. Do not claim that an accepted action proves application health inside the container.
 
-## 镜像、数据卷和网络
+## Images, volumes, and networks
 
-新增资源与容器独立授权，管理权限不隐含读取权限。`termous.remoteops.docker.capability` 接受 `docker:read` 或下列任一资源读取权限；该共享探测不会授予容器访问权。仅使用当前 MCP 连接实际公布的工具。
+These resources are authorized separately from containers, and manage Scopes do not imply read Scopes. `termous.remoteops.docker.capability` accepts `docker:read` or any resource read Scope below; this shared probe does not grant container access. Use only tools advertised by the current MCP connection.
 
-| 权限 | 工具 |
+| Scope | Tools |
 | --- | --- |
-| `docker:images:read` | `termous.remoteops.docker.images.list`、`termous.remoteops.docker.images.get` |
+| `docker:images:read` | `termous.remoteops.docker.images.list`, `termous.remoteops.docker.images.get` |
 | `docker:images:manage` | `termous.remoteops.docker.images.action` |
-| `docker:volumes:read` | `termous.remoteops.docker.volumes.list`、`termous.remoteops.docker.volumes.get` |
-| `docker:volumes:manage` | `termous.remoteops.docker.volumes.create`、`termous.remoteops.docker.volumes.action` |
-| `docker:networks:read` | `termous.remoteops.docker.networks.list`、`termous.remoteops.docker.networks.get` |
-| `docker:networks:manage` | `termous.remoteops.docker.networks.create`、`termous.remoteops.docker.networks.action` |
+| `docker:volumes:read` | `termous.remoteops.docker.volumes.list`, `termous.remoteops.docker.volumes.get` |
+| `docker:volumes:manage` | `termous.remoteops.docker.volumes.create`, `termous.remoteops.docker.volumes.action` |
+| `docker:networks:read` | `termous.remoteops.docker.networks.list`, `termous.remoteops.docker.networks.get` |
+| `docker:networks:manage` | `termous.remoteops.docker.networks.create`, `termous.remoteops.docker.networks.action` |
 
-列表接受 `session_id`、可选 `query`、`offset`、`limit`（默认 100、最多 500）。使用返回的完整镜像 ID（`sha256:` 加 64 位十六进制）或网络 ID（64 位十六进制）作为 `ref`；数据卷使用完整名称。详情只包含安全投影，不返回原始 inspect 或驱动私有选项。
+List calls accept `session_id` and optional `query`, `offset`, and `limit` (default 100, maximum 500). Use the returned full image ID (`sha256:` followed by 64 hexadecimal digits) or network ID (64 hexadecimal digits) as `ref`; use the full name for a volume. Detail responses contain only a safe projection, not raw inspect output or private driver options.
 
-写操作携带稳定的 `client_request_id`，默认逐次在 Termous 审批：
+Mutations require a stable `client_request_id` and per-call Termous approval by default:
 
-- 镜像 `action=tag` 需要 `tag`，使用显式仓库标签，如 `app:v2`；已有标签可能改为指向此镜像。`action=remove` 非强制删除镜像。
-- 卷 `create` 需要 `name`，固定使用 local 驱动，不接受驱动选项；同名已有卷可能由 Docker 直接返回。卷 `action=remove` 会永久删除卷内数据，使用中的卷不强制删除。
-- 网络 `create` 需要 `name`，固定使用 bridge 驱动；`internal=true` 表示内部网络，省略或 false 表示普通网络。
-- 网络 `action=connect` 或 `disconnect` 需要 `container`，优先传完整容器 ID。Core 在审批前解析并绑定完整容器 ID。`action=remove` 非强制删除网络。
+- Image `action=tag` requires `tag`; use an explicit repository tag such as `app:v2`. An existing tag may be redirected to this image. `action=remove` removes an image without forcing deletion.
+- Volume `create` requires `name`, uses the local driver, and accepts no driver options. Docker may return an existing volume with the same name. Volume `action=remove` permanently deletes its data and does not force removal of a volume in use.
+- Network `create` requires `name` and uses the bridge driver. `internal=true` creates an internal network; omitting it or using false creates a regular network.
+- Network `action=connect` or `disconnect` requires `container`; prefer the full container ID. Core resolves and binds the full container ID before approval. `action=remove` removes a network without forcing deletion.
 
-镜像和网络操作绑定完整 ID。数据卷没有不可变 ID，Core 在审批后复核创建时间、驱动及挂载位置；缺少创建时间或卷发生替换时拒绝执行。Docker 未提供卷删除 CAS，因此检查与执行之间不构成原子保证。
+Image and network operations bind to full IDs. Volumes have no immutable ID, so Core rechecks creation time, driver, and mount location after approval. It rejects execution if creation time is missing or the volume has been replaced. Docker provides no compare-and-swap operation for volume removal, so verification and execution are not atomic.
 
-不支持 force、prune、任意驱动参数或 CLI 片段。不把缺失能力转成通用命令执行。`MCP_OPERATION_UNCERTAIN` 或 `DOCKER_RESOURCE_TIMEOUT` 后先用获授权的只读工具核对；不使用新请求 ID 自动重试。结果只确认该 Docker 操作完成，不证明应用健康或后续状态不会变化。
+Force, prune, arbitrary driver parameters, and CLI fragments are unsupported. Do not replace missing capabilities with general command execution. After `MCP_OPERATION_UNCERTAIN` or `DOCKER_RESOURCE_TIMEOUT`, verify with authorized read-only tools first; do not retry automatically with a new request ID. A result confirms only completion of that Docker operation, not application health or an unchanging future state.

@@ -22,15 +22,15 @@ The relevant Scopes are:
 - `services:manage`
 - `docker:read`
 - `docker:manage`
-- `docker:images:read`、`docker:images:manage`
-- `docker:volumes:read`、`docker:volumes:manage`
-- `docker:networks:read`、`docker:networks:manage`
+- `docker:images:read`, `docker:images:manage`
+- `docker:volumes:read`, `docker:volumes:manage`
+- `docker:networks:read`, `docker:networks:manage`
 
 If a Tool is absent because its Scope is missing, ask the user to update that MCP client's permissions in Termous and reconnect the MCP connection so its Tool list is rebuilt. Approval bypass does not add a Scope. The Core MCP endpoint is dynamic; refresh the endpoint and token from Termous settings rather than relying on stale configuration.
 
 ## Approval and idempotency
 
-- 进程终止、服务操作，以及 Docker 容器、镜像、数据卷和网络变更默认均需逐次审批。
+- Process termination, service actions, and Docker container, image, volume, and network mutations require per-call approval by default.
 - An explicitly authorized client may have approval bypass enabled. This routes through the same authorization checks and does not bypass missing Scopes, disabled clients, session validation, target revalidation, or Host Key trust.
 - Never infer bypass from a quick or successful response.
 - Rejection, expiry, or cancellation before execution means the mutation did not start. Report that outcome without attempting a substitute action.

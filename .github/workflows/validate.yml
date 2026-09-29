@@ -31,3 +31,17 @@ jobs:
 
       - name: Test contract validator
         run: python -B -m unittest discover -s tests -p "test_*.py"
+
+  desktop-workflow:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Test isolated desktop workflow
+        run: python -B -m unittest discover -s tests -p "test_desktop_workflow.py"
