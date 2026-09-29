@@ -1,6 +1,6 @@
 # Termous Skills
 
-Termous Skills provide six focused workflows for the Termous MCP server, covering SSH commands, system operations, scheduled tasks, files, port forwarding, and snippets, plus a Windows desktop discovery and launch workflow. The built-in Termous AI assistant includes the skill bundle, and external AI clients can install skills separately. Skills contain instructions and references; Termous supplies the MCP connections, tools, permissions, and approvals. Local desktop operations require the external client's own local execution capability.
+Termous Skills provide six focused workflows for the Termous MCP server, covering SSH commands, system operations, scheduled tasks, files, port forwarding, and snippets, plus a desktop discovery and launch workflow for Windows, macOS, and Linux. The built-in Termous AI assistant includes the skill bundle, and external AI clients can install skills separately. Skills contain instructions, references, and optional Python helpers; Termous supplies the MCP connections, tools, permissions, and approvals. Local desktop operations require the external client's own local execution capability.
 
 ## Using the skills
 
@@ -32,7 +32,7 @@ For Codex, choose a project or home directory; the installer writes beneath `.ag
 
 | Skill | Use it for | Primary Scopes |
 | --- | --- | --- |
-| [termous-desktop](skills/termous-desktop/SKILL.md) | Windows installation information, version, executable path, running state, and launch when requested | No MCP Scope; uses the external client's local PowerShell |
+| [termous-desktop](skills/termous-desktop/SKILL.md) | Windows, macOS, and Linux installation metadata, running state, and launch when requested | No MCP Scope; uses local Python 3.9+ with no third-party packages |
 | [termous-remote-ops](skills/termous-remote-ops/SKILL.md) | Saved hosts, access profiles, SSH sessions, commands, output, and interruption | `hosts:read`, `hosts:probe`, `sessions:read`, `sessions:connect`, `sessions:close`, `commands:execute`, `commands:read`, `commands:interrupt` |
 | [termous-system-ops](skills/termous-system-ops/SKILL.md) | Inventory, processes, systemd, and Docker on a connected Linux session | `system:read`, `processes:read`, `processes:terminate`, `services:read`, `services:manage`, `docker:read`, `docker:manage` |
 | [termous-crontab](skills/termous-crontab/SKILL.md) | Structured jobs in the current SSH user's Crontab | `crontab:read`, `crontab:write` |
@@ -42,7 +42,7 @@ For Codex, choose a project or home directory; the installer writes beneath `.ag
 
 Choose the focused skill for the requested outcome. `termous-remote-ops` covers connection management and explicit shell commands, and links to the other domain workflows. Linux file-name search requires a compatible remote search component; when it is unavailable, use the installation guidance in Termous's file manager. The MCP tools do not install it automatically.
 
-`termous-desktop` works without MCP being online. It queries `HKCU\Software\Termous\Install` in the 64-bit registry view and falls back to HKLM when no valid record exists, then validates the installation paths and checks processes in the current Windows session. It launches once only when explicitly requested, does not relaunch when a matching process exists, and does not terminate processes or retry automatically when the state is unknown. Older installers may lack discovery records and require an upgrade to an installer that provides this entry. Neither installation discovery nor launch grants MCP permissions. The built-in AI assistant cannot perform this workflow without local execution capabilities and must not substitute remote SSH execution.
+`termous-desktop` works without MCP being online. Call its bundled `scripts/termous_desktop.py` with `info`, `status`, or `start`; do not reconstruct commands from Markdown. Windows discovery uses the 64-bit HKCU/HKLM installation records, macOS reads application bundles, and Linux reads standard desktop entries or a user-supplied AppImage path. Unknown versions are reported as null. The helper launches only when explicitly requested and suppresses duplicate or uncertain launches. Neither discovery nor launch grants MCP permissions. The built-in AI assistant cannot perform this workflow without local execution capabilities and must not substitute remote SSH execution.
 
 File actions depend on the connected engine's reported capabilities. Permissions, batch rename, SSH-based search, and atomic publication are not available on every backend. SMB uses configured NTLMv2 credentials and a share; it does not add separate tools or scopes. Cross-session copies can use different engines or independent sessions on the same host, subject to the existing ownership and permission checks.
 
@@ -107,7 +107,7 @@ python -B scripts/validate_skills.py
 python -B -m unittest discover -s tests -p "test_*.py"
 ```
 
-Windows workflow tests load the actual PowerShell functions from the Skill reference and replace registry, process, launch, and wait interfaces with in-memory mocks. They do not read real installation information or launch the application. Windows CI tests the available Windows PowerShell and PowerShell 7 interpreters. Other platforms skip this dedicated test while still validating all seven Skills, routing cases, and MCP contracts.
+Desktop workflow tests import the actual Python helpers and use isolated files and mocked registry, process, and launch interfaces. They do not read real installation information or launch the application. A Windows, macOS, and Linux CI matrix runs these tests. Bundling accepts Python source under `scripts/`, validates it as a hashed UTF-8 resource, and installs it without execution. The built-in assistant can read these resources but gains no local execution tool from their presence.
 
 When the Termous Backend is available in the adjacent workspace, also compare the contract with its Go registries, Scope constants, and MCP protocol version:
 

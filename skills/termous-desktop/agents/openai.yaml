@@ -1,4 +1,4 @@
 interface:
   display_name: "Termous Desktop"
-  short_description: "Find, inspect, and launch Termous on Windows"
-  default_prompt: "Use $termous-desktop to check the installed Termous version and whether it is running on this Windows computer."
+  short_description: "Find, inspect, and launch the local Termous application"
+  default_prompt: "Use $termous-desktop to check the installed Termous version and whether it is running on this computer."

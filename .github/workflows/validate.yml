@@ -33,7 +33,10 @@ jobs:
         run: python -B -m unittest discover -s tests -p "test_*.py"
 
   desktop-workflow:
-    runs-on: windows-latest
+    strategy:
+      matrix:
+        os: [windows-latest, macos-latest, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -44,4 +47,4 @@ jobs:
           python-version: "3.12"
 
       - name: Test isolated desktop workflow
-        run: python -B -m unittest discover -s tests -p "test_desktop_workflow.py"
+        run: python -B -m unittest discover -s tests -p "test_desktop_*.py"

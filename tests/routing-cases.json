@@ -1,6 +1,8 @@
 {
   "schema_version": 1,
   "cases": [
+    { "kind": "direct", "prompt": "Check whether Termous is running on macOS, without launching it.", "expected_skills": ["termous-desktop"] },
+    { "kind": "direct", "prompt": "Use the Python helper to launch my Termous AppImage on this Linux desktop if it is not running; I will provide its path if needed.", "expected_skills": ["termous-desktop"] },
     { "kind": "direct", "prompt": "Termous 安装在哪，版本是多少？只查询，不要启动。", "expected_skills": ["termous-desktop"] },
     { "kind": "direct", "prompt": "检查本机 Windows 的 Termous 是否已运行，没有运行就帮我启动。", "expected_skills": ["termous-desktop"] },
     { "kind": "direct", "prompt": "MCP 连不上，先检查我的 Termous 是否在后台或托盘运行，不要修改配置。", "expected_skills": ["termous-desktop"] },

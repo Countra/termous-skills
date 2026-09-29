@@ -1,30 +1,40 @@
 ---
 name: termous-desktop
-description: Discover the installed Termous desktop application on Windows, read its version and executable path, check whether its processes are running, or launch it when requested. Use the external client's local PowerShell capability; this workflow works before Termous or its MCP server starts. Not for remote SSH processes, Docker, installation, upgrades, or arbitrary local application management.
+description: Discover the local Termous desktop installation, read available version and path metadata, check whether it is running, or launch it when requested on Windows, macOS, and Linux. Uses a bundled Python standard-library helper through the external client's local execution tool and works before Termous MCP starts. Not for remote SSH processes, installation, upgrades, or managing other applications.
 ---
 
 # Termous Desktop
 
-Discover the local Termous installation on Windows, check its running state, and launch it when requested. Use the external AI client's local PowerShell execution capability; Termous MCP is not required.
+Use the bundled [Python helper](scripts/termous_desktop.py) directly. Do not copy code out of Markdown or write a replacement discovery command. Python 3.9 or newer is required; no pip packages are needed. Use an already-installed interpreter (`python` or `py -3` on Windows, usually `python3` on macOS and Linux). If none is available, report that requirement without installing one automatically.
 
-## Choose an operation
+## Commands
 
-Read the [Windows discovery and launch workflow](references/windows.md), then choose the operation that matches the request:
+Resolve the script relative to this installed Skill, then pass its absolute path to the client's local execution tool. Examples from the Skill directory:
 
-- **Version, installation directory, or executable path:** call `Get-TermousInstallation` to query installation metadata only.
-- **Running state:** call `Get-TermousDesktopState` to validate the installation record and process paths in the current Windows session.
-- **Launch:** call `Start-TermousDesktop` only when the user explicitly requests a launch or authorizes launching if not already running. A query alone does not authorize a launch.
+```text
+python -B scripts/termous_desktop.py info
+python -B scripts/termous_desktop.py status
+python -B scripts/termous_desktop.py start
+```
 
-The reference code only defines functions; loading it does not launch the application. Use the client's existing local execution tool to load and call the required functions in the same PowerShell session. Do not assume a client-specific tool name, change the execution policy, or require administrator privileges.
+- `info` reads installation metadata only.
+- `status` checks installation metadata and local processes without launching anything.
+- `start` launches at most once, only if a valid installation exists and no matching, conflicting, or inaccessible process prevents a reliable decision. Call it only when the user requests a launch or explicitly authorizes launching if not running.
 
-## Results and boundaries
+For a macOS application outside the standard Applications directories or a Linux AppImage without a desktop entry, use the absolute path supplied by the user:
 
-- Currently supports the fixed discovery entry provided by official Windows installers. Query the 64-bit registry view, preferring the current user's HKCU record over the machine-wide HKLM record. Do not scan disks, guess default directories, or modify the registry.
-- Older installations, manually moved executables, or upgrades in progress may lack a valid record. Report that no valid installation information was found; do not conclude that Termous is not installed or download, install, or repair registry entries automatically.
-- `detected` means a process with a matching executable path exists. It does not prove window visibility, application health, or MCP readiness. The installed version may differ from the version of an already-running process.
-- Do not launch again when a matching process exists. Report other-path processes, access restrictions, or an unconfirmed launch explicitly; do not terminate processes, repeatedly restart, or elevate automatically.
-- Inspect only the current Windows session and do not launch on behalf of other logged-in users. Explain this scope if the user asks about another account.
-- If the built-in Termous AI assistant has no local execution tool, never send these PowerShell commands to a remote SSH tool. A responsive built-in assistant indicates that its own instance is running, but does not establish installation metadata.
-- Do not use these commands on other platforms or guess discovery locations that have not been defined. If local execution is unavailable, explain the limitation and provide instructions for opening Termous manually.
+```text
+python3 -B scripts/termous_desktop.py status --path "/Applications/Termous.app"
+python3 -B scripts/termous_desktop.py start --path "/home/user/Applications/Termous.AppImage"
+```
 
-For remote work after launch, use the corresponding Termous MCP Skill. If MCP remains unavailable, ask the user to check the service and client configuration in Termous MCP settings. Do not read tokens, guess dynamic ports, or change connection settings automatically.
+Replace example paths with a known user-provided path; do not guess or scan disks. Windows uses the installer registry record and does not accept `--path`. Read [platform discovery and result semantics](references/platforms.md) when interpreting missing metadata, process states, or a launch result.
+
+## Boundaries
+
+- This workflow requires the external client's local execution capability. Do not send it to SSH or run it on another computer. The built-in Termous assistant cannot use it without a local execution tool.
+- Loading the script or using `info`/`status` never launches the application. Follow existing client execution approvals for `start`; an explicit launch request need not be reconfirmed solely by this Skill.
+- Registry records, bundle metadata, and filenames locate an installation; they do not verify a signature or authorize execution.
+- Process detection does not establish window visibility, application health, MCP readiness, or the version of an already-running process. Minimized and tray-hidden instances still count as running.
+- Report unknown states and missing metadata honestly. Do not terminate processes, elevate, alter execution policies, download dependencies, or retry uncertain launches automatically.
+- For remote work after launch, use the corresponding Termous MCP Skill and the client's configured authorized connection. Do not read tokens, scan ports, or reconfigure MCP automatically.

@@ -45,7 +45,7 @@ For exact cursors, idempotency, and connection states, read [references/tool-wor
 
 Use the focused Skill when the request is primarily one of these domains:
 
-- `$termous-desktop`: local Windows installation information, running state, and application launch when requested, using the external client's local capabilities rather than SSH.
+- `$termous-desktop`: local installation information, running state, and application launch on Windows, macOS, or Linux when requested, using the external client's local capabilities rather than SSH.
 - `$termous-system-ops`: inventory, processes, systemd, or Docker.
 - `$termous-crontab`: structured jobs for the current SSH user's Crontab.
 - `$termous-files`: file sessions, remote files, and file transfers.
