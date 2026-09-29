@@ -22,7 +22,7 @@ class FileContractRenameTests(unittest.TestCase):
         self.assertEqual(self.validate(), [])
         renamed = [tool for tool in self.contract["tools"] if tool["skill"] == "termous-files"]
         self.assertEqual(len(renamed), 31)
-        self.assertEqual(len(self.contract["tools"]) - len(renamed), 50)
+        self.assertEqual(len(self.contract["tools"]) - len(renamed), 61)
         self.assertEqual(len(set(validator.FILE_TOOL_RENAMES.values())), 31)
         self.assertEqual(len(set(validator.FILE_SCOPE_RENAMES.values())), 9)
 
@@ -47,6 +47,13 @@ class FileContractRenameTests(unittest.TestCase):
                 next(tool for tool in self.contract["tools"] if tool["name"] == "termous.files.read_text")["name"] = name
                 self.assertTrue(self.validate())
                 self.contract = original
+
+    def test_shared_capability_does_not_accept_manage_scope(self):
+        original = copy.deepcopy(self.contract)
+        capability = next(tool for tool in self.contract["tools"] if tool["name"] == "termous.remoteops.docker.capability")
+        capability["alternative_scopes"].append("docker:images:manage")
+        self.assertTrue(self.validate())
+        self.contract = original
 
     def test_old_search_scope_and_reordered_tools_are_rejected(self):
         original = copy.deepcopy(self.contract)

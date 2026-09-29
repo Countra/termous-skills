@@ -1,8 +1,8 @@
 {
   "contract_version": 2,
   "mcp_protocol_version": "2025-11-25",
-  "tool_count": 81,
-  "scope_count": 30,
+  "tool_count": 92,
+  "scope_count": 36,
   "scopes": [
     "hosts:read",
     "hosts:probe",
@@ -28,6 +28,12 @@
     "services:manage",
     "docker:read",
     "docker:manage",
+    "docker:images:read",
+    "docker:images:manage",
+    "docker:volumes:read",
+    "docker:volumes:manage",
+    "docker:networks:read",
+    "docker:networks:manage",
     "crontab:read",
     "crontab:write",
     "forwarding:read",
@@ -58,7 +64,7 @@
     { "name": "termous.remoteops.services.logs", "skill": "termous-system-ops", "scope": "services:read", "approval": "none" },
     { "name": "termous.remoteops.services.operations.get", "skill": "termous-system-ops", "scope": "services:read", "approval": "none" },
     { "name": "termous.remoteops.services.action", "skill": "termous-system-ops", "scope": "services:manage", "approval": "per-call" },
-    { "name": "termous.remoteops.docker.capability", "skill": "termous-system-ops", "scope": "docker:read", "approval": "none" },
+    { "name": "termous.remoteops.docker.capability", "skill": "termous-system-ops", "scope": "docker:read", "alternative_scopes": ["docker:images:read", "docker:volumes:read", "docker:networks:read"], "approval": "none" },
     { "name": "termous.remoteops.docker.containers.list", "skill": "termous-system-ops", "scope": "docker:read", "approval": "none" },
     { "name": "termous.remoteops.docker.containers.get", "skill": "termous-system-ops", "scope": "docker:read", "approval": "none" },
     { "name": "termous.remoteops.docker.containers.stats", "skill": "termous-system-ops", "scope": "docker:read", "approval": "none" },
@@ -122,6 +128,17 @@
     { "name": "termous.files.delete.start", "skill": "termous-files", "scope": "files:delete", "approval": "per-call" },
     { "name": "termous.files.delete.get", "skill": "termous-files", "scope": "files:delete", "approval": "none" },
     { "name": "termous.files.delete.result", "skill": "termous-files", "scope": "files:delete", "approval": "none" },
-    { "name": "termous.files.delete.cancel", "skill": "termous-files", "scope": "files:cancel", "approval": "none" }
+    { "name": "termous.files.delete.cancel", "skill": "termous-files", "scope": "files:cancel", "approval": "none" },
+    { "name": "termous.remoteops.docker.images.list", "skill": "termous-system-ops", "scope": "docker:images:read", "approval": "none" },
+    { "name": "termous.remoteops.docker.images.get", "skill": "termous-system-ops", "scope": "docker:images:read", "approval": "none" },
+    { "name": "termous.remoteops.docker.images.action", "skill": "termous-system-ops", "scope": "docker:images:manage", "approval": "per-call" },
+    { "name": "termous.remoteops.docker.volumes.list", "skill": "termous-system-ops", "scope": "docker:volumes:read", "approval": "none" },
+    { "name": "termous.remoteops.docker.volumes.get", "skill": "termous-system-ops", "scope": "docker:volumes:read", "approval": "none" },
+    { "name": "termous.remoteops.docker.volumes.create", "skill": "termous-system-ops", "scope": "docker:volumes:manage", "approval": "per-call" },
+    { "name": "termous.remoteops.docker.volumes.action", "skill": "termous-system-ops", "scope": "docker:volumes:manage", "approval": "per-call" },
+    { "name": "termous.remoteops.docker.networks.list", "skill": "termous-system-ops", "scope": "docker:networks:read", "approval": "none" },
+    { "name": "termous.remoteops.docker.networks.get", "skill": "termous-system-ops", "scope": "docker:networks:read", "approval": "none" },
+    { "name": "termous.remoteops.docker.networks.create", "skill": "termous-system-ops", "scope": "docker:networks:manage", "approval": "per-call" },
+    { "name": "termous.remoteops.docker.networks.action", "skill": "termous-system-ops", "scope": "docker:networks:manage", "approval": "per-call" }
   ]
 }

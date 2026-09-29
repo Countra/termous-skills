@@ -41,6 +41,26 @@ class BackendRegistryTests(unittest.TestCase):
             validator.validate_backend(root, contract, {tool}, errors)
             self.assertEqual(errors, [])
 
+            # 共享只读探测允许多个替代权限，但不把 AND 或未识别条件误当成授权。
+            (model / "types.go").write_text(
+                'ScopeFilesDelete Scope = "files:delete"\nScopeFilesRead Scope = "files:read"\nProtocolVersion = "2025-11-25"\n', encoding="utf-8"
+            )
+            shared_source = source.replace(
+                'if principal.HasScope(mcpaccessmodel.ScopeFilesDelete) {',
+                'if principal.HasScope(mcpaccessmodel.ScopeFilesDelete) || principal.HasScope(mcpaccessmodel.ScopeFilesRead) {'
+            )
+            split.write_text(shared_source, encoding="utf-8")
+            contract["scopes"].append("files:read")
+            contract["tools"][0]["alternative_scopes"] = ["files:read"]
+            errors = []
+            validator.validate_backend(root, contract, {tool}, errors)
+            self.assertEqual(errors, [])
+            split.write_text(shared_source.replace("||", "&&"), encoding="utf-8")
+            errors = []
+            validator.validate_backend(root, contract, {tool}, errors)
+            self.assertTrue(any("no recognized Scope" in error for error in errors), errors)
+            split.write_text(shared_source, encoding="utf-8")
+
             (registry / "files/duplicate_registry.go").write_text(source, encoding="utf-8")
             errors = []
             validator.validate_backend(root, contract, {tool}, errors)

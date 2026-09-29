@@ -1,4 +1,4 @@
 interface:
   display_name: "Termous System Ops"
-  short_description: "Inspect Linux processes, services, and containers"
-  default_prompt: "Use $termous-system-ops to inspect a connected Linux host and safely manage a process, systemd service, or Docker container."
+  short_description: "检查 Linux 系统并管理 Docker 容器、镜像、数据卷和网络"
+  default_prompt: "使用 $termous-system-ops 检查已连接的 Linux 主机，并通过结构化工具管理进程、systemd 服务或 Docker 容器、镜像、数据卷和网络。"

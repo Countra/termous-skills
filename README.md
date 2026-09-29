@@ -45,6 +45,8 @@ File actions depend on the connected engine's reported capabilities. Permissions
 
 After changing a Termous MCP client's Scopes or approval-bypass setting, reconnect that MCP client. Its currently advertised Tool list is bound to the authorization revision established at connection time.
 
+Docker 指引覆盖容器、镜像、数据卷和网络。新增资源分别使用 `docker:images:read/manage`、`docker:volumes:read/manage`、`docker:networks:read/manage` 六项权限；旧容器权限不扩大，管理不隐含读取。资源写操作沿用原生审批与幂等，删除数据卷需明确数据影响。工具清单共 92 项、权限共 36 项，详细参数和边界见 [Docker 指引](skills/termous-system-ops/references/docker.md)。
+
 ## Hosts and session selection
 
 A host can have several connection profiles, or no SSH connection at all. Discover its access profiles and choose the requested SSH or file profile; do not assume that every host supports SSH or that every session for a host uses the same account and route.
@@ -88,7 +90,7 @@ The default source is `../termous-skills/skills` and the default Core checkout i
 
 ## Maintaining MCP coverage
 
-`contracts/mcp-tools.json` mirrors only the stable Tool name, Scope, approval class, and primary Skill ownership. It intentionally does not duplicate Tool schemas or Backend DTOs. Contract v2 covers 81 Tools and 30 Scopes for MCP protocol `2025-11-25`; a client's visible tools depend on its granted scopes.
+`contracts/mcp-tools.json` 保存稳定工具名、权限（含共享探测的替代读取权限）、审批类型和归属 Skill，不复制工具 Schema 或后端 DTO。合同 v2 覆盖 MCP 协议 `2025-11-25` 的 92 项工具和 36 项权限；实际可见工具由客户端授权决定。
 
 File management uses `termous.files.*`, `files:*`, and `termous-files`. It supports SFTP and configured S3 / MinIO, WebDAV, FTP / FTPS, and SMB profiles without granting arbitrary local browsing. External MCP no longer accepts the old tool names; update the skills and reconnect to load the tool catalog. The validator retains a frozen v1 baseline and allows only the established renames of 31 tools and 9 scopes. Profile discovery reuses the host access catalog; other permissions and approval policies remain compatible.
 

@@ -21,7 +21,8 @@ ROUTING_CASES_PATH = ROOT / "tests" / "routing-cases.json"
 SKILL_NAME_PATTERN = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 MARKDOWN_LINK_PATTERN = re.compile(r"\[[^\]]+\]\(([^)]+)\)")
 TOOL_NAME_PATTERN = re.compile(r'^\s*Name:\s*"(termous\.[^"]+)"', re.MULTILINE)
-TOOL_SCOPE_PATTERN = re.compile(r"^\s*if\s+principal\.HasScope\(mcpaccessmodel\.(Scope\w+)\)")
+TOOL_SCOPE_CALL = r"principal\.HasScope\(mcpaccessmodel\.(Scope\w+)\)"
+TOOL_SCOPE_PATTERN = re.compile(r"^\s*if\s+(" + TOOL_SCOPE_CALL + r"(?:\s*\|\|\s*" + TOOL_SCOPE_CALL + r")*)\s*\{\s*$")
 SCOPE_PATTERN = re.compile(r'(Scope\w+)\s+Scope\s*=\s*"([^"]+)"')
 PROTOCOL_PATTERN = re.compile(r'ProtocolVersion\s*=\s*"([^"]+)"')
 PROTOCOL_VERSION_PATTERN = re.compile(r"^\d{4}-\d{2}-\d{2}$")
@@ -37,8 +38,8 @@ ALLOWED_APPROVALS = {"none", "per-call"}
 ROUTING_KINDS = {"direct", "cross-domain", "ambiguous", "negative"}
 EXPECTED_CONTRACT_VERSION = 2
 EXPECTED_SKILL_COUNT = 6
-EXPECTED_TOOL_COUNT = 81
-EXPECTED_SCOPE_COUNT = 30
+EXPECTED_TOOL_COUNT = 92
+EXPECTED_SCOPE_COUNT = 36
 LEGACY_TOOL_COUNT = 75
 LEGACY_TOOL_CONTRACT_SHA256 = "bf346a7314f0fbd97fce3cef954a1888cd34ef2d58ddb3ef8ccd44f2a6dc832d"
 APPENDED_TOOL_CONTRACT = (
@@ -48,6 +49,17 @@ APPENDED_TOOL_CONTRACT = (
     ("termous.sftp.files.delete.get", "termous-sftp", "sftp:delete", "none"),
     ("termous.sftp.files.delete.result", "termous-sftp", "sftp:delete", "none"),
     ("termous.sftp.files.delete.cancel", "termous-sftp", "sftp:cancel", "none"),
+    ("termous.remoteops.docker.images.list", "termous-system-ops", "docker:images:read", "none"),
+    ("termous.remoteops.docker.images.get", "termous-system-ops", "docker:images:read", "none"),
+    ("termous.remoteops.docker.images.action", "termous-system-ops", "docker:images:manage", "per-call"),
+    ("termous.remoteops.docker.volumes.list", "termous-system-ops", "docker:volumes:read", "none"),
+    ("termous.remoteops.docker.volumes.get", "termous-system-ops", "docker:volumes:read", "none"),
+    ("termous.remoteops.docker.volumes.create", "termous-system-ops", "docker:volumes:manage", "per-call"),
+    ("termous.remoteops.docker.volumes.action", "termous-system-ops", "docker:volumes:manage", "per-call"),
+    ("termous.remoteops.docker.networks.list", "termous-system-ops", "docker:networks:read", "none"),
+    ("termous.remoteops.docker.networks.get", "termous-system-ops", "docker:networks:read", "none"),
+    ("termous.remoteops.docker.networks.create", "termous-system-ops", "docker:networks:manage", "per-call"),
+    ("termous.remoteops.docker.networks.action", "termous-system-ops", "docker:networks:manage", "per-call"),
 )
 # v1 基准固定保留；仅允许这 31 项改名，其他工具、顺序、权限和审批策略不得改变。
 FILE_TOOL_RENAMES = {
@@ -209,6 +221,16 @@ def validate_contract(errors: list[str]) -> tuple[dict[str, object], set[str], s
             errors.append(f"{prefix}: unknown Scope {scope!r}")
         else:
             used_scopes.add(scope)
+        alternatives = tool.get("alternative_scopes", [])
+        if (not isinstance(alternatives, list) or not all(isinstance(item, str) and item in scope_set for item in alternatives)
+                or len(set(alternatives)) != len(alternatives) or scope in alternatives):
+            errors.append(f"{prefix}: invalid alternative_scopes")
+        elif alternatives:
+            used_scopes.update(alternatives)
+        # 共享能力探测仅新增三种资源的读取授权，其他旧工具不得扩权。
+        expected_alternatives = ["docker:images:read", "docker:volumes:read", "docker:networks:read"] if name == "termous.remoteops.docker.capability" else []
+        if alternatives != expected_alternatives:
+            errors.append(f"{prefix}: unexpected alternative_scopes")
         if not isinstance(approval, str) or approval not in ALLOWED_APPROVALS:
             errors.append(f"{prefix}: invalid approval {approval!r}")
 
@@ -489,24 +511,24 @@ def validate_backend(backend_root: Path, contract: dict[str, object], tool_names
     for module_path, function_name in sorted(set(available_entrypoints) - set(registered_entrypoints)):
         errors.append(f"Backend MCP Tool entrypoint is not registered: {module_path}.{function_name}")
 
-    backend_tool_scopes: dict[str, str] = {}
+    backend_tool_scopes: dict[str, frozenset[str]] = {}
     for entrypoint in registered_entrypoints:
         source = available_entrypoints.get(entrypoint)
         if source is None:
             continue
-        current_scope = ""
+        current_scope = frozenset()
         scope_indent = -1
         for line in source.splitlines():
             indent = len(line) - len(line.lstrip())
             if scope_match := TOOL_SCOPE_PATTERN.search(line):
-                current_scope = scope_declarations.get(scope_match.group(1), "")
+                current_scope = frozenset(scope_declarations.get(name, "") for name in re.findall(TOOL_SCOPE_CALL, scope_match.group(1)))
                 scope_indent = indent
             # Registry 由 gofmt 格式化；回到 HasScope 同级缩进即离开授权块。
             elif current_scope and line.strip() and indent <= scope_indent:
-                current_scope = ""
+                current_scope = frozenset()
                 scope_indent = -1
             for tool_name in TOOL_NAME_PATTERN.findall(line):
-                if not current_scope:
+                if not current_scope or "" in current_scope:
                     errors.append(f"Backend Tool has no recognized Scope: {tool_name}")
                     continue
                 previous_scope = backend_tool_scopes.get(tool_name)
@@ -531,7 +553,7 @@ def validate_backend(backend_root: Path, contract: dict[str, object], tool_names
             errors.append(f"contract contains stale Tools: {', '.join(stale)}")
 
     contract_tool_scopes = {
-        tool["name"]: tool["scope"]
+        tool["name"]: frozenset([tool["scope"], *tool.get("alternative_scopes", [])])
         for tool in contract.get("tools", [])
         if isinstance(tool, dict) and isinstance(tool.get("name"), str) and isinstance(tool.get("scope"), str)
     }
