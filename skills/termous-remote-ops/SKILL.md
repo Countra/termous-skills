@@ -39,6 +39,8 @@ After either branch:
 
 Commands reuse the existing interactive shell, so changes made by `cd`, `export`, and `set` persist. When composing a one-off script, confine strict options such as `set -e` to an explicit subshell so they cannot cause later user input or Tab completion to exit the shell. Do not wrap or rewrite a complete user-specified command without authorization, and do not automatically run `set +e` to change the user's settings.
 
+不同 AI 会话可以同时运行；同一 SSH 会话的命令在内部逐条排队。`queued` 表示已受理，应查询原任务，不申请外部锁或重复派发。排队只串行化单条命令，不保证多条命令之间的 Shell 状态不被其他会话修改。停止 AI 仅自动取消该 Run 尚未提交的命令目标，已提交命令仍通过 `termous.commands.interrupt` 主动中断。
+
 For exact cursors, idempotency, and connection states, read [references/tool-workflows.md](references/tool-workflows.md). For trust and error rules, read [references/safety-and-errors.md](references/safety-and-errors.md).
 
 ## Related Termous Skills
