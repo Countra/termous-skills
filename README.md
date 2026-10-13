@@ -33,6 +33,7 @@ For Codex, choose a project or home directory; the installer writes beneath `.ag
 | Skill | Use it for | Primary Scopes |
 | --- | --- | --- |
 | [termous-desktop](skills/termous-desktop/SKILL.md) | Windows, macOS, and Linux installation metadata, running state, and launch when requested | No MCP Scope; uses local Python 3.9+ with no third-party packages |
+| [termous-remote-desktop](skills/termous-remote-desktop/SKILL.md) | RDP / VNC screenshots, approved pointer and keyboard automation, and control lifecycle | `desktops:read`, `desktops:connect`, `desktops:capture`, `desktops:control`, `desktops:close` |
 | [termous-remote-ops](skills/termous-remote-ops/SKILL.md) | Saved hosts, access profiles, SSH sessions, commands, output, and interruption | `hosts:read`, `hosts:probe`, `sessions:read`, `sessions:connect`, `sessions:close`, `commands:execute`, `commands:read`, `commands:interrupt` |
 | [termous-system-ops](skills/termous-system-ops/SKILL.md) | Inventory, processes, systemd, and Docker on a connected Linux session | `system:read`, `processes:read`, `processes:terminate`, `services:read`, `services:manage`, `docker:read`, `docker:manage` |
 | [termous-crontab](skills/termous-crontab/SKILL.md) | Structured jobs in the current SSH user's Crontab | `crontab:read`, `crontab:write` |
@@ -48,7 +49,7 @@ File actions depend on the connected engine's reported capabilities. Permissions
 
 After changing a Termous MCP client's Scopes or approval-bypass setting, reconnect that MCP client. Its currently advertised Tool list is bound to the authorization revision established at connection time.
 
-Docker guidance covers containers, images, volumes, and networks. Images, volumes, and networks use six separate Scopes: `docker:images:read/manage`, `docker:volumes:read/manage`, and `docker:networks:read/manage`. Existing container permissions are unchanged, and manage Scopes do not imply read access. Resource mutations retain native approval and idempotency; volume removal requires an explicit explanation of data loss. The catalog contains 92 tools and 36 Scopes. See the [Docker guide](skills/termous-system-ops/references/docker.md) for parameters and boundaries.
+Docker guidance covers containers, images, volumes, and networks. Images, volumes, and networks use six separate Scopes: `docker:images:read/manage`, `docker:volumes:read/manage`, and `docker:networks:read/manage`. Existing container permissions are unchanged, and manage Scopes do not imply read access. Resource mutations retain native approval and idempotency; volume removal requires an explicit explanation of data loss. The catalog contains 111 tools and 41 Scopes. See the [Docker guide](skills/termous-system-ops/references/docker.md) for parameters and boundaries.
 
 ## Hosts and session selection
 
@@ -82,7 +83,7 @@ Local filesystem mounts and their persistent caches are managed by the desktop a
 
 | Path | Purpose |
 | --- | --- |
-| `skills/` | Seven skill directories, their references, and client metadata |
+| `skills/` | Eight skill directories, their references, and client metadata |
 | [contracts/mcp-tools.json](contracts/mcp-tools.json) | Tool names, scopes, approval classes, and owning skills |
 | [tests/routing-cases.json](tests/routing-cases.json) | Direct, cross-domain, ambiguous, and negative routing cases |
 | [scripts/validate_skills.py](scripts/validate_skills.py) | Skill validation and optional comparison with Termous Core |
@@ -93,7 +94,7 @@ The default source is `../termous-skills/skills` and the default Core checkout i
 
 ## Maintaining MCP coverage
 
-`contracts/mcp-tools.json` records stable tool names, Scopes (including alternative read Scopes for shared probes), approval classes, and owning Skills without duplicating tool schemas or backend DTOs. Contract v2 covers 92 tools and 36 Scopes for MCP protocol `2025-11-25`; client authorization determines which tools are actually advertised.
+`contracts/mcp-tools.json` records stable tool names, Scopes (including alternative read Scopes for shared probes), approval classes, and owning Skills without duplicating tool schemas or backend DTOs. Contract v2 covers 111 tools and 41 Scopes for MCP protocol `2025-11-25`; client authorization determines which tools are actually advertised.
 
 File management uses `termous.files.*`, `files:*`, and `termous-files`. It supports SFTP and configured S3 / MinIO, WebDAV, FTP / FTPS, and SMB profiles without granting arbitrary local browsing. External MCP no longer accepts the old tool names; update the skills and reconnect to load the tool catalog. The validator retains a frozen v1 baseline and allows only the established renames of 31 tools and 9 scopes. Profile discovery reuses the host access catalog; other permissions and approval policies remain compatible.
 

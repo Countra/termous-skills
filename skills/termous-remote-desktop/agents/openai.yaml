@@ -1,0 +1,4 @@
+interface:
+  display_name: "Termous Remote Desktop"
+  short_description: "Observe and control saved RDP and VNC desktops"
+  default_prompt: "Use $termous-remote-desktop to capture the selected RDP or VNC desktop, obtain control for my task, and verify each action visually."

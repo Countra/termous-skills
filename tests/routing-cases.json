@@ -1,6 +1,7 @@
 {
   "schema_version": 1,
   "cases": [
+    { "kind": "direct", "prompt": "通过 Termous 的 RDP 或 VNC 截图并点击登录窗口，操作前申请控制，结束后释放。", "expected_skills": ["termous-remote-desktop"] },
     { "kind": "direct", "prompt": "Check whether Termous is running on macOS, without launching it.", "expected_skills": ["termous-desktop"] },
     { "kind": "direct", "prompt": "Use the Python helper to launch my Termous AppImage on this Linux desktop if it is not running; I will provide its path if needed.", "expected_skills": ["termous-desktop"] },
     { "kind": "direct", "prompt": "Termous 安装在哪，版本是多少？只查询，不要启动。", "expected_skills": ["termous-desktop"] },

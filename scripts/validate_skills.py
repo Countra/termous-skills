@@ -37,11 +37,11 @@ ALLOWED_FRONTMATTER = {"name", "description", "license", "allowed-tools", "metad
 ALLOWED_APPROVALS = {"none", "per-call"}
 ROUTING_KINDS = {"direct", "cross-domain", "ambiguous", "negative"}
 EXPECTED_CONTRACT_VERSION = 2
-EXPECTED_SKILL_COUNT = 7
+EXPECTED_SKILL_COUNT = 8
 # 本机软件发现不依赖 MCP，也不能为了归属校验虚构工具或权限。
 LOCAL_ONLY_SKILLS = {"termous-desktop"}
-EXPECTED_TOOL_COUNT = 92
-EXPECTED_SCOPE_COUNT = 36
+EXPECTED_TOOL_COUNT = 111
+EXPECTED_SCOPE_COUNT = 41
 LEGACY_TOOL_COUNT = 75
 LEGACY_TOOL_CONTRACT_SHA256 = "bf346a7314f0fbd97fce3cef954a1888cd34ef2d58ddb3ef8ccd44f2a6dc832d"
 APPENDED_TOOL_CONTRACT = (
@@ -62,6 +62,25 @@ APPENDED_TOOL_CONTRACT = (
     ("termous.remoteops.docker.networks.get", "termous-system-ops", "docker:networks:read", "none"),
     ("termous.remoteops.docker.networks.create", "termous-system-ops", "docker:networks:manage", "per-call"),
     ("termous.remoteops.docker.networks.action", "termous-system-ops", "docker:networks:manage", "per-call"),
+    ("termous.desktops.list", "termous-remote-desktop", "desktops:read", "none"),
+    ("termous.desktops.get", "termous-remote-desktop", "desktops:read", "none"),
+    ("termous.desktops.connect", "termous-remote-desktop", "desktops:connect", "none"),
+    ("termous.desktops.attach", "termous-remote-desktop", "desktops:capture", "none"),
+    ("termous.desktops.detach", "termous-remote-desktop", "desktops:capture", "none"),
+    ("termous.desktops.capture", "termous-remote-desktop", "desktops:capture", "none"),
+    ("termous.desktops.control.acquire", "termous-remote-desktop", "desktops:control", "per-call"),
+    ("termous.desktops.control.release", "termous-remote-desktop", "desktops:control", "none"),
+    ("termous.desktops.operations.get", "termous-remote-desktop", "desktops:control", "none"),
+    ("termous.desktops.close", "termous-remote-desktop", "desktops:close", "none"),
+    ("termous.desktops.pointer.move", "termous-remote-desktop", "desktops:control", "none"),
+    ("termous.desktops.pointer.click", "termous-remote-desktop", "desktops:control", "none"),
+    ("termous.desktops.pointer.scroll", "termous-remote-desktop", "desktops:control", "none"),
+    ("termous.desktops.pointer.drag", "termous-remote-desktop", "desktops:control", "none"),
+    ("termous.desktops.keyboard.key", "termous-remote-desktop", "desktops:control", "none"),
+    ("termous.desktops.keyboard.shortcut", "termous-remote-desktop", "desktops:control", "none"),
+    ("termous.desktops.keyboard.text", "termous-remote-desktop", "desktops:control", "none"),
+    ("termous.desktops.clipboard.set_text", "termous-remote-desktop", "desktops:control", "none"),
+    ("termous.desktops.resize", "termous-remote-desktop", "desktops:control", "none"),
 )
 # v1 基准固定保留；仅允许这 31 项改名，其他工具、顺序、权限和审批策略不得改变。
 FILE_TOOL_RENAMES = {
