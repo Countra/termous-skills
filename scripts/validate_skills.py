@@ -37,11 +37,11 @@ ALLOWED_FRONTMATTER = {"name", "description", "license", "allowed-tools", "metad
 ALLOWED_APPROVALS = {"none", "per-call"}
 ROUTING_KINDS = {"direct", "cross-domain", "ambiguous", "negative"}
 EXPECTED_CONTRACT_VERSION = 2
-EXPECTED_SKILL_COUNT = 8
+EXPECTED_SKILL_COUNT = 9
 # 本机软件发现不依赖 MCP，也不能为了归属校验虚构工具或权限。
 LOCAL_ONLY_SKILLS = {"termous-desktop"}
-EXPECTED_TOOL_COUNT = 111
-EXPECTED_SCOPE_COUNT = 41
+EXPECTED_TOOL_COUNT = 133
+EXPECTED_SCOPE_COUNT = 45
 LEGACY_TOOL_COUNT = 75
 LEGACY_TOOL_CONTRACT_SHA256 = "bf346a7314f0fbd97fce3cef954a1888cd34ef2d58ddb3ef8ccd44f2a6dc832d"
 APPENDED_TOOL_CONTRACT = (
@@ -81,6 +81,28 @@ APPENDED_TOOL_CONTRACT = (
     ("termous.desktops.keyboard.text", "termous-remote-desktop", "desktops:control", "none"),
     ("termous.desktops.clipboard.set_text", "termous-remote-desktop", "desktops:control", "none"),
     ("termous.desktops.resize", "termous-remote-desktop", "desktops:control", "none"),
+    ("termous.desktop_workflows.schema", "termous-desktop-workflows", "desktop_workflows:read", "none"),
+    ("termous.desktop_workflows.list", "termous-desktop-workflows", "desktop_workflows:read", "none"),
+    ("termous.desktop_workflows.get", "termous-desktop-workflows", "desktop_workflows:read", "none"),
+    ("termous.desktop_workflows.versions", "termous-desktop-workflows", "desktop_workflows:read", "none"),
+    ("termous.desktop_workflows.create", "termous-desktop-workflows", "desktop_workflows:write", "none"),
+    ("termous.desktop_workflows.update", "termous-desktop-workflows", "desktop_workflows:write", "none"),
+    ("termous.desktop_workflows.duplicate", "termous-desktop-workflows", "desktop_workflows:write", "none"),
+    ("termous.desktop_workflows.restore", "termous-desktop-workflows", "desktop_workflows:write", "none"),
+    ("termous.desktop_workflows.delete", "termous-desktop-workflows", "desktop_workflows:delete", "per-call"),
+    ("termous.desktop_workflows.validate", "termous-desktop-workflows", "desktop_workflows:read", "none"),
+    ("termous.desktop_workflows.captures.create", "termous-desktop-workflows", "desktops:capture", "none"),
+    ("termous.desktop_workflows.captures.release", "termous-desktop-workflows", "desktops:capture", "none"),
+    ("termous.desktop_workflows.templates.preview", "termous-desktop-workflows", "desktops:capture", "none"),
+    ("termous.desktop_workflows.templates.get", "termous-desktop-workflows", "desktops:capture", "none"),
+    ("termous.desktop_workflows.templates.confirm", "termous-desktop-workflows", "desktop_workflows:write", "none"),
+    ("termous.desktop_workflows.templates.discard", "termous-desktop-workflows", "desktops:capture", "none"),
+    ("termous.desktop_workflows.templates.match", "termous-desktop-workflows", "desktops:capture", "none"),
+    ("termous.desktop_workflows.assets.get", "termous-desktop-workflows", "desktops:capture", "none"),
+    ("termous.desktop_workflows.runs.start", "termous-desktop-workflows", "desktop_workflows:run", "per-call"),
+    ("termous.desktop_workflows.runs.list", "termous-desktop-workflows", "desktop_workflows:read", "none"),
+    ("termous.desktop_workflows.runs.get", "termous-desktop-workflows", "desktop_workflows:read", "none"),
+    ("termous.desktop_workflows.runs.control", "termous-desktop-workflows", "desktop_workflows:run", "none"),
 )
 # v1 基准固定保留；仅允许这 31 项改名，其他工具、顺序、权限和审批策略不得改变。
 FILE_TOOL_RENAMES = {

@@ -34,6 +34,7 @@ For Codex, choose a project or home directory; the installer writes beneath `.ag
 | --- | --- | --- |
 | [termous-desktop](skills/termous-desktop/SKILL.md) | Windows, macOS, and Linux installation metadata, running state, and launch when requested | No MCP Scope; uses local Python 3.9+ with no third-party packages |
 | [termous-remote-desktop](skills/termous-remote-desktop/SKILL.md) | RDP / VNC screenshots, approved pointer and keyboard automation, and control lifecycle | `desktops:read`, `desktops:connect`, `desktops:capture`, `desktops:control`, `desktops:close` |
+| [termous-desktop-workflows](skills/termous-desktop-workflows/SKILL.md) | Visual desktop scripts, confirmed image templates, fixed-version execution, and run reports | `desktop_workflows:read`, `desktop_workflows:write`, `desktop_workflows:run`, `desktop_workflows:delete`, plus desktop permissions for images and execution |
 | [termous-remote-ops](skills/termous-remote-ops/SKILL.md) | Saved hosts, access profiles, SSH sessions, commands, output, and interruption | `hosts:read`, `hosts:probe`, `sessions:read`, `sessions:connect`, `sessions:close`, `commands:execute`, `commands:read`, `commands:interrupt` |
 | [termous-system-ops](skills/termous-system-ops/SKILL.md) | Inventory, processes, systemd, and Docker on a connected Linux session | `system:read`, `processes:read`, `processes:terminate`, `services:read`, `services:manage`, `docker:read`, `docker:manage` |
 | [termous-crontab](skills/termous-crontab/SKILL.md) | Structured jobs in the current SSH user's Crontab | `crontab:read`, `crontab:write` |
@@ -49,7 +50,7 @@ File actions depend on the connected engine's reported capabilities. Permissions
 
 After changing a Termous MCP client's Scopes or approval-bypass setting, reconnect that MCP client. Its currently advertised Tool list is bound to the authorization revision established at connection time.
 
-Docker guidance covers containers, images, volumes, and networks. Images, volumes, and networks use six separate Scopes: `docker:images:read/manage`, `docker:volumes:read/manage`, and `docker:networks:read/manage`. Existing container permissions are unchanged, and manage Scopes do not imply read access. Resource mutations retain native approval and idempotency; volume removal requires an explicit explanation of data loss. The catalog contains 111 tools and 41 Scopes. See the [Docker guide](skills/termous-system-ops/references/docker.md) for parameters and boundaries.
+Docker guidance covers containers, images, volumes, and networks. Images, volumes, and networks use six separate Scopes: `docker:images:read/manage`, `docker:volumes:read/manage`, and `docker:networks:read/manage`. Existing container permissions are unchanged, and manage Scopes do not imply read access. Resource mutations retain native approval and idempotency; volume removal requires an explicit explanation of data loss. The catalog contains 133 tools and 45 Scopes. See the [Docker guide](skills/termous-system-ops/references/docker.md) for parameters and boundaries.
 
 ## Hosts and session selection
 
@@ -121,7 +122,7 @@ For every MCP Tool change:
 1. Update `contracts/mcp-tools.json` and assign one primary Skill.
 2. Update that Skill's workflow and safety references.
 3. Add or revise a realistic case in `tests/routing-cases.json`.
-4. Run repository validation and the official Skill `quick_validate.py` for all seven Skill directories.
+4. Run repository validation and the official Skill `quick_validate.py` for all Skill directories.
 5. Forward-test direct, negative, and cross-domain prompts before creating a Git tag.
 
 Git tags version the repository. Desktop releases select matching Core and Skills revisions and validate their compatibility before packaging. Skill frontmatter remains limited to standard fields.

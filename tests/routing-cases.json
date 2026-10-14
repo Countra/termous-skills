@@ -1,6 +1,7 @@
 {
   "schema_version": 1,
   "cases": [
+    { "kind": "direct", "prompt": "创建桌面回归脚本，用图标模板双击打开软件，先预览模板再确认，运行固定版本直到报告结束。", "expected_skills": ["termous-desktop-workflows"] },
     { "kind": "direct", "prompt": "通过 Termous 的 RDP 或 VNC 截图并点击登录窗口，操作前申请控制，结束后释放。", "expected_skills": ["termous-remote-desktop"] },
     { "kind": "direct", "prompt": "Check whether Termous is running on macOS, without launching it.", "expected_skills": ["termous-desktop"] },
     { "kind": "direct", "prompt": "Use the Python helper to launch my Termous AppImage on this Linux desktop if it is not running; I will provide its path if needed.", "expected_skills": ["termous-desktop"] },

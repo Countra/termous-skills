@@ -1,9 +1,13 @@
 {
   "contract_version": 2,
   "mcp_protocol_version": "2025-11-25",
-  "tool_count": 111,
-  "scope_count": 41,
+  "tool_count": 133,
+  "scope_count": 45,
   "scopes": [
+    "desktop_workflows:read",
+    "desktop_workflows:write",
+    "desktop_workflows:run",
+    "desktop_workflows:delete",
     "hosts:read",
     "hosts:probe",
     "sessions:read",
@@ -716,6 +720,138 @@
       "name": "termous.desktops.resize",
       "skill": "termous-remote-desktop",
       "scope": "desktops:control",
+      "approval": "none"
+    },
+    {
+      "name": "termous.desktop_workflows.schema",
+      "skill": "termous-desktop-workflows",
+      "scope": "desktop_workflows:read",
+      "approval": "none"
+    },
+    {
+      "name": "termous.desktop_workflows.list",
+      "skill": "termous-desktop-workflows",
+      "scope": "desktop_workflows:read",
+      "approval": "none"
+    },
+    {
+      "name": "termous.desktop_workflows.get",
+      "skill": "termous-desktop-workflows",
+      "scope": "desktop_workflows:read",
+      "approval": "none"
+    },
+    {
+      "name": "termous.desktop_workflows.versions",
+      "skill": "termous-desktop-workflows",
+      "scope": "desktop_workflows:read",
+      "approval": "none"
+    },
+    {
+      "name": "termous.desktop_workflows.create",
+      "skill": "termous-desktop-workflows",
+      "scope": "desktop_workflows:write",
+      "approval": "none"
+    },
+    {
+      "name": "termous.desktop_workflows.update",
+      "skill": "termous-desktop-workflows",
+      "scope": "desktop_workflows:write",
+      "approval": "none"
+    },
+    {
+      "name": "termous.desktop_workflows.duplicate",
+      "skill": "termous-desktop-workflows",
+      "scope": "desktop_workflows:write",
+      "approval": "none"
+    },
+    {
+      "name": "termous.desktop_workflows.restore",
+      "skill": "termous-desktop-workflows",
+      "scope": "desktop_workflows:write",
+      "approval": "none"
+    },
+    {
+      "name": "termous.desktop_workflows.delete",
+      "skill": "termous-desktop-workflows",
+      "scope": "desktop_workflows:delete",
+      "approval": "per-call"
+    },
+    {
+      "name": "termous.desktop_workflows.validate",
+      "skill": "termous-desktop-workflows",
+      "scope": "desktop_workflows:read",
+      "approval": "none"
+    },
+    {
+      "name": "termous.desktop_workflows.captures.create",
+      "skill": "termous-desktop-workflows",
+      "scope": "desktops:capture",
+      "approval": "none"
+    },
+    {
+      "name": "termous.desktop_workflows.captures.release",
+      "skill": "termous-desktop-workflows",
+      "scope": "desktops:capture",
+      "approval": "none"
+    },
+    {
+      "name": "termous.desktop_workflows.templates.preview",
+      "skill": "termous-desktop-workflows",
+      "scope": "desktops:capture",
+      "approval": "none"
+    },
+    {
+      "name": "termous.desktop_workflows.templates.get",
+      "skill": "termous-desktop-workflows",
+      "scope": "desktops:capture",
+      "approval": "none"
+    },
+    {
+      "name": "termous.desktop_workflows.templates.confirm",
+      "skill": "termous-desktop-workflows",
+      "scope": "desktop_workflows:write",
+      "approval": "none"
+    },
+    {
+      "name": "termous.desktop_workflows.templates.discard",
+      "skill": "termous-desktop-workflows",
+      "scope": "desktops:capture",
+      "approval": "none"
+    },
+    {
+      "name": "termous.desktop_workflows.templates.match",
+      "skill": "termous-desktop-workflows",
+      "scope": "desktops:capture",
+      "approval": "none"
+    },
+    {
+      "name": "termous.desktop_workflows.assets.get",
+      "skill": "termous-desktop-workflows",
+      "scope": "desktops:capture",
+      "approval": "none"
+    },
+    {
+      "name": "termous.desktop_workflows.runs.start",
+      "skill": "termous-desktop-workflows",
+      "scope": "desktop_workflows:run",
+      "approval": "per-call"
+    },
+    {
+      "name": "termous.desktop_workflows.runs.list",
+      "skill": "termous-desktop-workflows",
+      "scope": "desktop_workflows:read",
+      "approval": "none"
+    },
+    {
+      "name": "termous.desktop_workflows.runs.get",
+      "skill": "termous-desktop-workflows",
+      "scope": "desktop_workflows:read",
+      "approval": "none"
+    },
+    {
+      "name": "termous.desktop_workflows.runs.control",
+      "skill": "termous-desktop-workflows",
+      "scope": "desktop_workflows:run",
       "approval": "none"
     }
   ]
