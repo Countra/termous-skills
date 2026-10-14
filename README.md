@@ -50,7 +50,7 @@ File actions depend on the connected engine's reported capabilities. Permissions
 
 After changing a Termous MCP client's Scopes or approval-bypass setting, reconnect that MCP client. Its currently advertised Tool list is bound to the authorization revision established at connection time.
 
-Docker guidance covers containers, images, volumes, and networks. Images, volumes, and networks use six separate Scopes: `docker:images:read/manage`, `docker:volumes:read/manage`, and `docker:networks:read/manage`. Existing container permissions are unchanged, and manage Scopes do not imply read access. Resource mutations retain native approval and idempotency; volume removal requires an explicit explanation of data loss. The catalog contains 133 tools and 45 Scopes. See the [Docker guide](skills/termous-system-ops/references/docker.md) for parameters and boundaries.
+Docker guidance covers containers, images, volumes, and networks. Images, volumes, and networks use six separate Scopes: `docker:images:read/manage`, `docker:volumes:read/manage`, and `docker:networks:read/manage`. Existing container permissions are unchanged, and manage Scopes do not imply read access. Resource mutations retain native approval and idempotency; volume removal requires an explicit explanation of data loss. The catalog contains 134 tools and 45 Scopes. See the [Docker guide](skills/termous-system-ops/references/docker.md) for parameters and boundaries.
 
 ## Hosts and session selection
 

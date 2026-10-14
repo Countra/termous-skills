@@ -36,6 +36,14 @@ Use the available `termous.desktops.*` tools. Termous must remain running. Tool 
 
 Permissions are independent: `desktops:read`, `desktops:connect`, `desktops:capture`, `desktops:control`, and `desktops:close`. Control also requires capture. Existing clients do not gain scopes automatically; reconnect after changing permissions. Do not read local tokens or credential files to bypass this boundary.
 
+## 定位与成本边界
+
+- 内置 Agent 按目标动作使用 discover_tools；需要的准确工具不在声明中时，先用精确 names 或动作查询搜索，不能用相似名称或反向操作代替。附着 preparing 时只查询等待 ready；申请控制用 control.acquire，归还用 control.release，grant_id 必须使用本轮 acquire 返回值，不能填 none 等占位值。
+- `desktop_cleanup_uncertain` 表示清理未确认；旧版 Core 在 release／detach／acquire／close 中可能返回 `desktop_input_uncertain` 表示相同问题。此时停止新的桌面接管、输入和脚本运行，可只读查询、截图、取消自己的运行并解释已知结果，不重复释放或宣称安全释放。实际输入或步骤 uncertain 仍须停止自动操作，不重放；不能只凭错误码中的 uncertain 字样推断新输入已派发。
+- 坐标基于实际返回图片尺寸；需要看清小目标时，使用桌面脚本 captures.create → captures.view 在固定原帧查看局部。观察视图不等于可点击的 screenshot_ref。
+- 打开 Edge 并访问已知 URL 优先用快捷键与文本输入，再截图验证；无需把整个网页标题制作成模板。
+- 遵守当前 Run 明确给出的执行预算；默认关闭时不自行附加请求、Token、失败或选区次数上限。重复失败应根据诊断调整方案，不能用新请求 ID 重放不确定输入。
+
 ## Input tools
 
 | Tool | Input |

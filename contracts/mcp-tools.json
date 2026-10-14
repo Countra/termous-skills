@@ -1,7 +1,7 @@
 {
   "contract_version": 2,
   "mcp_protocol_version": "2025-11-25",
-  "tool_count": 133,
+  "tool_count": 134,
   "scope_count": 45,
   "scopes": [
     "desktop_workflows:read",
@@ -784,6 +784,12 @@
     },
     {
       "name": "termous.desktop_workflows.captures.create",
+      "skill": "termous-desktop-workflows",
+      "scope": "desktops:capture",
+      "approval": "none"
+    },
+    {
+      "name": "termous.desktop_workflows.captures.view",
       "skill": "termous-desktop-workflows",
       "scope": "desktops:capture",
       "approval": "none"

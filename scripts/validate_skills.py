@@ -40,7 +40,7 @@ EXPECTED_CONTRACT_VERSION = 2
 EXPECTED_SKILL_COUNT = 9
 # 本机软件发现不依赖 MCP，也不能为了归属校验虚构工具或权限。
 LOCAL_ONLY_SKILLS = {"termous-desktop"}
-EXPECTED_TOOL_COUNT = 133
+EXPECTED_TOOL_COUNT = 134
 EXPECTED_SCOPE_COUNT = 45
 LEGACY_TOOL_COUNT = 75
 LEGACY_TOOL_CONTRACT_SHA256 = "bf346a7314f0fbd97fce3cef954a1888cd34ef2d58ddb3ef8ccd44f2a6dc832d"
@@ -92,6 +92,7 @@ APPENDED_TOOL_CONTRACT = (
     ("termous.desktop_workflows.delete", "termous-desktop-workflows", "desktop_workflows:delete", "per-call"),
     ("termous.desktop_workflows.validate", "termous-desktop-workflows", "desktop_workflows:read", "none"),
     ("termous.desktop_workflows.captures.create", "termous-desktop-workflows", "desktops:capture", "none"),
+    ("termous.desktop_workflows.captures.view", "termous-desktop-workflows", "desktops:capture", "none"),
     ("termous.desktop_workflows.captures.release", "termous-desktop-workflows", "desktops:capture", "none"),
     ("termous.desktop_workflows.templates.preview", "termous-desktop-workflows", "desktops:capture", "none"),
     ("termous.desktop_workflows.templates.get", "termous-desktop-workflows", "desktops:capture", "none"),
