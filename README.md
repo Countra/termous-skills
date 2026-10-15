@@ -26,6 +26,8 @@ These commands do not add an MCP Tool, Scope, or Skill route. Profile-only assoc
 
 The MCP client must support Streamable HTTP and client-token authentication. An MCP configuration and skill installation serve different purposes: installing a skill alone does not connect the client or grant permissions. This repository contains no endpoint, token, or credentials.
 
+Before choosing a tool, compare the intended action with its actual effect and required resource. On the first failure, distinguish invalid arguments, an unmet environmental prerequisite, and a missing capability. Corrected arguments or a changed environment may justify retrying the same tool; a query does not create or restore a resource. In the built-in Agent, use `discover_tools` as soon as the exact operation is missing or unclear. Recovery hints load candidates but never execute them or grant permissions. An unknown internal error does not prove that a resource is missing, and `retryable=false` alone does not prove that the wrong tool was chosen.
+
 For Codex, choose a project or home directory; the installer writes beneath `.agents/skills`. Claude Code uses `.claude/skills` beneath the selected directory, while the custom option installs directly into it. Existing skills are skipped by default; explicit replacement overwrites the whole matching skill directory. The desktop installer uses the bundle shipped with that application, not a download of this repository's latest revision.
 
 ## Skill catalog

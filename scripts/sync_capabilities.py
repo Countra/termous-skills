@@ -6,6 +6,8 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 ROLES = {"list", "inspect", "observe", "preview", "submit", "poll", "result", "mutate", "input", "cancel", "close"}
+FAILURES = {"blocked", "uncertain", "stale", "pending", "missing", "invalid", "unavailable", "unknown"}
+BINDINGS = {"ssh_session", "ssh_profile", "desktop_session", "desktop_profile", "file_profile"}
 
 
 def full_name(capability, name):
@@ -32,7 +34,9 @@ def validate_catalog(root=ROOT):
                                       or not evidence["settled"] or any(not isinstance(state, str) or not state for state in evidence["settled"])):
             raise ValueError("资源就绪态必须引用状态字段并声明非空状态枚举")
         validate_uri(root, capability["skill"])
-        references.extend(full_name(capability, name) for name in capability["entry"] + capability["recovery"])
+        references.extend(full_name(capability, name) for name in capability["entry"] + capability["recovery"] + capability.get("missing", []))
+        if any(key not in {"session", "profile"} or value not in BINDINGS for key, value in capability.get("bindings", {}).items()):
+            raise ValueError("能力契约引用未知的目标绑定")
         declared = capability.get("operations", {})
         if set(declared) != {name for step in capability["steps"] for name in step["tools"]}:
             raise ValueError("每个工具必须有且仅有一份检索动作声明")
@@ -50,13 +54,37 @@ def validate_catalog(root=ROOT):
             if "completion" in step:
                 references.append(full_name(capability, step["completion"]["next"]))
             if "progresses" in step:
-                references.extend(full_name(capability, name) for name in step["progresses"]["tools"])
+                progresses = step["progresses"]
+                references.extend(full_name(capability, name) for name in progresses["tools"])
+                if not isinstance(progresses.get("path"), str) or not progresses["path"]:
+                    raise ValueError("进展规则必须引用非空回执字段")
+                if "collection" in progresses and not isinstance(progresses["collection"], bool):
+                    raise ValueError("空集合进展标记必须为布尔值")
+                if progresses.get("collection"):
+                    empty_lists = {name for case in capability.get("cases", []) if case.get("empty") is True for name in case["tools"]}
+                    lists = {name for previous in capability["steps"] if previous["role"] == "list" for name in previous["tools"]}
+                    if not progresses["tools"] or set(progresses["tools"]) - (empty_lists & lists):
+                        raise ValueError("空集合进展只能引用同能力中声明了空结果的列表")
         for case in capability.get("cases", []):
             references.extend(full_name(capability, name) for name in case["tools"] + case["next"])
+            if not case.get("tools") or not case.get("guidance") or not (case.get("path") or case.get("errors")):
+                raise ValueError("恢复规则缺少工具、条件或说明")
+            if any(value not in FAILURES for value in case.get("errors", [])):
+                raise ValueError("恢复规则引用未知错误类别")
+            if any(value not in {"session", "profile", "unbound"} for value in case.get("targets", [])):
+                raise ValueError("恢复规则引用未知目标类别")
+            if any(target != "unbound" and target not in capability.get("bindings", {}) for target in case.get("targets", [])):
+                raise ValueError("目标恢复规则必须声明绑定来源")
+            if case.get("codes") and not case.get("errors"):
+                raise ValueError("错误码规则必须声明错误类别")
+            if case.get("omittedIsEmpty") and (case.get("empty") is not True or not case.get("path") or case.get("errors")):
+                raise ValueError("旧版空集合兼容只能用于明确的成功列表结果")
     if names != expected:
         raise ValueError(f"工具职责覆盖不完整: missing={sorted(expected - names)}, extra={sorted(names - expected)}")
     for uri, entries in catalog.get("skillEntries", {}).items():
         validate_uri(root, uri)
+        if len(entries) > 8 or len(entries) != len(set(entries)):
+            raise ValueError("Skill 入口超出加载上限或存在重复工具")
         references.extend(entries)
     if set(references) - names:
         raise ValueError(f"导航引用不存在的工具: {sorted(set(references) - names)}")

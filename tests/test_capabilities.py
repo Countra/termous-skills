@@ -38,7 +38,7 @@ class CapabilityTests(unittest.TestCase):
                 path = root / "skills" / uri.removeprefix("skill://")
                 path.parent.mkdir(parents=True, exist_ok=True)
                 path.write_text("流程说明", encoding="utf-8")
-            for change in ("missing", "duplicate", "reference", "resource", "operation_missing", "operation_unknown", "settled_without_states", "settled_invalid"):
+            for change in ("missing", "duplicate", "reference", "resource", "operation_missing", "operation_unknown", "settled_without_states", "settled_invalid", "recovery_error", "recovery_target", "unreachable_target", "empty_error", "entry_overflow", "progress_path", "progress_collection", "progress_target"):
                 catalog = json.loads(json.dumps(source))
                 family = catalog["capabilities"][0]
                 if change == "missing":
@@ -55,6 +55,24 @@ class CapabilityTests(unittest.TestCase):
                     family["evidence"] = {"settled": ["running"]}
                 elif change == "settled_invalid":
                     family["evidence"] = {"states": ["instance.status"], "settled": [None]}
+                elif change == "recovery_error":
+                    family["cases"] = [{"tools": ["list"], "errors": ["invented"], "next": [], "guidance": "说明"}]
+                elif change == "recovery_target":
+                    family["cases"] = [{"tools": ["list"], "errors": ["missing"], "targets": ["session"], "next": [], "guidance": "说明"}]
+                elif change == "unreachable_target":
+                    family["bindings"] = {"profile": "file_profile"}
+                    family["cases"] = [{"tools": ["list"], "errors": ["missing"], "targets": ["session"], "next": [], "guidance": "说明"}]
+                elif change == "empty_error":
+                    family["cases"] = [{"tools": ["list"], "path": "items", "errors": ["missing"], "empty": True, "omittedIsEmpty": True, "next": [], "guidance": "说明"}]
+                elif change == "entry_overflow":
+                    catalog["skillEntries"][next(iter(catalog["skillEntries"]))] = ["termous.hosts.list"] * 9
+                elif change.startswith("progress_"):
+                    family["steps"][0]["progresses"] = {"tools": ["access_profiles.list"], "path": "catalog.id"}
+                    progresses = family["steps"][0]["progresses"]
+                    if change == "progress_path":
+                        progresses["path"] = ""
+                    else:
+                        progresses["collection"] = "true" if change == "progress_collection" else True
                 else:
                     family["operations"]["list"] = ["invented_action"]
                 (root / "contracts/agent-capabilities.json").write_text(json.dumps(catalog), encoding="utf-8")
