@@ -1,4 +1,4 @@
 interface:
   display_name: "Termous Desktop Workflows"
-  short_description: "创建、编辑图像定位脚本，执行 RDP／VNC 回归并检查报告"
-  default_prompt: "使用 $termous-desktop-workflows 创建或编辑桌面脚本，先检查模板预览再确认，按固定版本运行并等待报告。"
+  short_description: "Build image-based RDP/VNC scripts and review regression reports"
+  default_prompt: "Use $termous-desktop-workflows to create or edit a desktop script, inspect template previews before confirming them, run a pinned version, and wait for the report."

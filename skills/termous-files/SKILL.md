@@ -5,6 +5,10 @@ description: Use Termous MCP file sessions to browse or maintain remote files, s
 
 # Termous Files
 
+Scope and result semantics: File operations use a separate `file_session_id` and the current connection generation; an SSH session cannot substitute for a file session. Directory and content reads, ordinary writes, transfers, batch renames, and deletions have distinct workflows. A preview's `plan_hash` is not an execution task; query `operation_id`/`transfer_id` for terminal states and results. Cancellation does not guarantee rollback. File-name search does not search file contents; do not install missing components yourself.
+
+For the built-in Agent, read the resource for the current stage: `skill://termous-files/references/session-and-files.md`, `skill://termous-files/references/transfers.md`, `skill://termous-files/references/batch-rename.md`, `skill://termous-files/references/deletion.md`, or `skill://termous-files/references/file-name-search.md`. For repeated failures of the same kind, check capabilities, connection generations, or conflicts as described in `skill://termous-files/references/safety-and-errors.md`; do not replay the operation with a new request ID.
+
 Use the Termous MCP server as the only interface to saved hosts, file sessions, remote files, and transfer tasks. File sessions support SFTP, S3 / MinIO, WebDAV, and FTP / FTPS; available operations depend on the session's capabilities. They do not grant arbitrary local browsing or bucket management. Never obtain credentials or open a separate SSH/SFTP connection outside Termous.
 
 ## Verified resources and file references

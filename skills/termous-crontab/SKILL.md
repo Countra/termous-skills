@@ -5,6 +5,10 @@ description: Use structured Termous MCP tools to inspect and safely manage Cront
 
 # Termous Crontab
 
+Scope and result semantics: Manage only the current SSH user's structured Crontab, not systemd timers or execution of saved jobs. Follow capability → get → mutation with expected_revision → get. A new revision confirms that the configuration was saved, not that the job ran successfully. On conflict, reload and reconcile the changes; do not keep saving a job while waiting for it to execute.
+
+Built-in Agent resource URIs: `skill://termous-crontab/references/workflows.md` and `skill://termous-crontab/references/safety-and-conflicts.md`.
+
 Use the Termous MCP server as the only interface to the current SSH user's structured Crontab jobs. Never open another SSH connection, edit the raw Crontab, or substitute an arbitrary shell command for an unavailable structured tool.
 
 If an SSH reference becomes unavailable, ask the user to restore the connection or replace the reference in the UI. Core restores the connection by creating an MCP session with a new ID from the original SSH profile and updating the binding only after the session is ready. This requires no additional MCP tool; the model must not restore the connection itself, replay commands, or resume a paused message queue. Use the new ID only after it appears in the current run's system snapshot. Existing tasks retain their original identities. File profile references do not participate in SSH recovery.

@@ -22,7 +22,13 @@ class FileContractRenameTests(unittest.TestCase):
         self.assertEqual(self.validate(), [])
         renamed = [tool for tool in self.contract["tools"] if tool["skill"] == "termous-files"]
         self.assertEqual(len(renamed), 31)
-        self.assertEqual(len(self.contract["tools"]) - len(renamed), 61)
+        # 新增桌面领域不应破坏文件改名合同；未改名条目必须在 v1 投影中原样保留。
+        errors = []
+        projected = validator.project_v1_contract(self.contract["tools"], errors)
+        self.assertEqual(errors, [])
+        for current, previous in zip(self.contract["tools"], projected):
+            if current["skill"] != "termous-files":
+                self.assertEqual(current, previous)
         self.assertEqual(len(set(validator.FILE_TOOL_RENAMES.values())), 31)
         self.assertEqual(len(set(validator.FILE_SCOPE_RENAMES.values())), 9)
 

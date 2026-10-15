@@ -5,6 +5,10 @@ description: Use Termous MCP to discover saved hosts and access profiles, create
 
 # Termous Remote Ops
 
+Scope and result semantics: A host/Profile selects a connection, `session_id` identifies an SSH session, and `task_id` identifies a command task; these identities are not interchangeable. `commands.dispatch` only submits the task. Use `commands.get` to verify each target's terminal state and exit code, and `commands.read_output` with epoch and next_offset to read output. An accepted interrupt does not mean the command has exited. Use the corresponding domain Skill for file, systemd, Crontab, and desktop tasks; do not switch to shell commands to bypass missing permissions.
+
+Built-in Agent workflow resource: `skill://termous-remote-ops/references/tool-workflows.md`. For errors and idempotency boundaries, read `skill://termous-remote-ops/references/safety-and-errors.md`. If the exact tool is not loaded, discover it by operation name; inspection, submission, and interruption are not interchangeable.
+
 Use the Termous MCP server as the only interface to saved hosts, access profiles, SSH sessions, and remote command tasks. Never obtain credentials or open a second SSH connection outside Termous.
 
 If an SSH reference becomes unavailable, ask the user to restore the connection or replace the reference in the UI. Core restores the connection by creating an MCP session with a new ID from the original SSH profile and updating the binding only after the session is ready. This requires no additional MCP tool; the model must not restore the connection itself, replay commands, or resume a paused message queue. Use the new ID only after it appears in the current run's system snapshot. Existing tasks retain their original identities. File profile references do not participate in SSH recovery.
@@ -39,7 +43,7 @@ After either branch:
 
 Commands reuse the existing interactive shell, so changes made by `cd`, `export`, and `set` persist. When composing a one-off script, confine strict options such as `set -e` to an explicit subshell so they cannot cause later user input or Tab completion to exit the shell. Do not wrap or rewrite a complete user-specified command without authorization, and do not automatically run `set +e` to change the user's settings.
 
-不同 AI 会话可以同时运行；同一 SSH 会话的命令在内部逐条排队。`queued` 表示已受理，应查询原任务，不申请外部锁或重复派发。排队只串行化单条命令，不保证多条命令之间的 Shell 状态不被其他会话修改。停止 AI 仅自动取消该 Run 尚未提交的命令目标，已提交命令仍通过 `termous.commands.interrupt` 主动中断。
+Different AI sessions can run concurrently; commands for the same SSH session are queued internally and executed one at a time. `queued` means the target was accepted; query the original task instead of acquiring an external lock or dispatching it again. The queue serializes individual commands only; other sessions may change the shared shell state between commands. Stopping the AI automatically cancels only command targets from that Run that have not yet been submitted to the terminal. Commands already submitted must still be explicitly interrupted through `termous.commands.interrupt`.
 
 For exact cursors, idempotency, and connection states, read [references/tool-workflows.md](references/tool-workflows.md). For trust and error rules, read [references/safety-and-errors.md](references/safety-and-errors.md).
 

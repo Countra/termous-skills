@@ -5,6 +5,10 @@ description: Use structured Termous MCP tools to inspect Linux inventory and pro
 
 # Termous System Ops
 
+Scope and result semantics: This Skill manages system inventory, processes, systemd, and Docker through a connected Linux session, not the local desktop or Crontab. Capability checks do not establish application readiness. After inventory.refresh, use get; after systemd.action, use operations.get and then verify the Unit. A sent signal or started container does not prove that the target application completed the intended action. Use each Docker resource's full identity and required permissions.
+
+Built-in Agent reference URIs: `skill://termous-system-ops/references/inventory-and-processes.md`, `skill://termous-system-ops/references/systemd.md`, and `skill://termous-system-ops/references/docker.md`. Handle failures and writes with uncertain outcomes as described in `skill://termous-system-ops/references/safety-and-errors.md`; do not compensate for missing capabilities by resubmitting requests or using shell commands.
+
 Use the structured Termous RemoteOps tools as the only interface to Linux inventory, processes, systemd, and Docker. Never open another SSH connection or replace a missing structured capability with an arbitrary shell command.
 
 If an SSH reference becomes unavailable, ask the user to restore the connection or replace the reference in the UI. Core restores the connection by creating an MCP session with a new ID from the original SSH profile and updating the binding only after the session is ready. This requires no additional MCP tool; the model must not restore the connection itself, replay commands, or resume a paused message queue. Use the new ID only after it appears in the current run's system snapshot. Existing tasks retain their original identities. File profile references do not participate in SSH recovery.

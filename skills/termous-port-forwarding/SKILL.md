@@ -5,6 +5,10 @@ description: Use Termous MCP to inspect saved forwarding profiles and Core-manag
 
 # Termous Port Forwarding
 
+Scope and result semantics: `profiles.*` reads configuration without starting a tunnel. `instances.start` returns an instance; use its `forward_id` for subsequent queries, never its `profile_id`. Acceptance of a start or stop request does not establish that the instance is ready or stopped; verify lifecycle/status/phase. Do not repeat start requests while waiting for completion.
+
+Built-in Agent resource URIs: `skill://termous-port-forwarding/references/workflows.md` and `skill://termous-port-forwarding/references/safety-and-lifecycle.md`. This Skill manages Core tunnels; do not launch a separate local ssh process or bypass the existing approval policy.
+
 Use Termous MCP as the only interface to saved forwarding profiles and live forwarding instances. Do not open a separate SSH connection or recreate a forward with shell commands.
 
 If an SSH reference becomes unavailable, ask the user to restore the connection or replace the reference in the UI. Core restores the connection by creating an MCP session with a new ID from the original SSH profile and updating the binding only after the session is ready. This requires no additional MCP tool; the model must not restore the connection itself, replay commands, or resume a paused message queue. Use the new ID only after it appears in the current run's system snapshot. Existing tasks retain their original identities. File profile references do not participate in SSH recovery.

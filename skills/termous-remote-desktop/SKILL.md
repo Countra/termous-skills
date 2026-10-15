@@ -36,13 +36,17 @@ Use the available `termous.desktops.*` tools. Termous must remain running. Tool 
 
 Permissions are independent: `desktops:read`, `desktops:connect`, `desktops:capture`, `desktops:control`, and `desktops:close`. Control also requires capture. Existing clients do not gain scopes automatically; reconnect after changing permissions. Do not read local tokens or credential files to bypass this boundary.
 
-## 定位与成本边界
+## Targeting and execution-budget boundaries
 
-- 内置 Agent 按目标动作使用 discover_tools；需要的准确工具不在声明中时，先用精确 names 或动作查询搜索，不能用相似名称或反向操作代替。附着 preparing 时只查询等待 ready；申请控制用 control.acquire，归还用 control.release，grant_id 必须使用本轮 acquire 返回值，不能填 none 等占位值。
-- `desktop_cleanup_uncertain` 表示清理未确认；旧版 Core 在 release／detach／acquire／close 中可能返回 `desktop_input_uncertain` 表示相同问题。此时停止新的桌面接管、输入和脚本运行，可只读查询、截图、取消自己的运行并解释已知结果，不重复释放或宣称安全释放。实际输入或步骤 uncertain 仍须停止自动操作，不重放；不能只凭错误码中的 uncertain 字样推断新输入已派发。
-- 坐标基于实际返回图片尺寸；需要看清小目标时，使用桌面脚本 captures.create → captures.view 在固定原帧查看局部。观察视图不等于可点击的 screenshot_ref。
-- 打开 Edge 并访问已知 URL 优先用快捷键与文本输入，再截图验证；无需把整个网页标题制作成模板。
-- 遵守当前 Run 明确给出的执行预算；默认关闭时不自行附加请求、Token、失败或选区次数上限。重复失败应根据诊断调整方案，不能用新请求 ID 重放不确定输入。
+- Capability boundaries: `termous-desktop` is only for external clients to discover or launch the local Termous application. This Skill's `termous.desktops.*` tools provide immediate remote-desktop observation and input. Fixed-frame snapshots, templates, script versions, and workflow runs belong to `termous.desktop_workflows.*`.
+- Ordinary `termous.desktops.capture` returns `screenshot_id`, which cannot be passed as a workflow snapshot_id. For a fixed frame or template, discover `termous.desktop_workflows.captures.create` directly and use the current valid `attachment_id`. See `skill://termous-desktop-workflows/references/templates.md`.
+- A new screenshot ID for the same image, a refresh request, or a no-new-frame error does not establish task progress. After a loop diagnostic, review the actual results, the required result type, and the exact tool, then adjust the next action. Reading documentation does not itself achieve the task objective. Diagnostics are advisory: they neither grant permissions nor require forced termination.
+
+- In the built-in Agent, use discover_tools for the intended action. If the exact tool is not in the current declarations, search first using exact names or an operation query; do not substitute a similarly named tool or the inverse operation. While an attachment is preparing, only query it and wait for ready. Acquire control with control.acquire and release it with control.release. Use the grant_id returned by acquire in the current Run; never supply placeholders such as none.
+- `desktop_cleanup_uncertain` means cleanup is unconfirmed. Older Core versions may return `desktop_input_uncertain` for the same problem during release, detach, acquire, or close. Stop new desktop takeovers, input, and script runs. You may perform read-only queries, capture screenshots, cancel your own runs, and explain known results; do not repeat release or claim control was safely released. An uncertain input or step still requires stopping automated actions without replaying it. The word uncertain in an error code alone does not establish that new input was dispatched.
+- Coordinates use the actual dimensions of the returned image. To inspect a small target, use the desktop-workflow captures.create → captures.view sequence to view part of the fixed source frame. An observation view is not a screenshot_ref usable for a click.
+- Prefer keyboard shortcuts and text input to open Edge and navigate to a known URL, then capture the result to verify it. There is no need to create a template from the entire page title.
+- Honor any execution budget explicitly supplied for the current Run. When budgets are disabled, as they are by default, do not impose your own limits on requests, tokens, failures, or selection attempts. Adjust the approach using diagnostics after repeated failures; never replay uncertain input with a new request ID.
 
 ## Input tools
 

@@ -624,8 +624,15 @@ def validate_backend(backend_root: Path, contract: dict[str, object], tool_names
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--backend-root", type=Path, help="Optional adjacent Termous Backend root")
+    parser.add_argument("--web-root", type=Path, help="校验 Worker 的能力契约生成副本")
     args = parser.parse_args()
     errors: list[str] = []
+
+    from sync_capabilities import synchronize
+    try:
+        synchronize(check=True, backend_root=args.backend_root, web_root=args.web_root)
+    except (OSError, ValueError, KeyError, TypeError) as error:
+        errors.append(f"能力契约校验失败: {error}")
 
     contract, tool_names, contract_owners = validate_contract(errors)
     skill_dirs = sorted(path for path in SKILLS_DIR.iterdir() if path.is_dir())

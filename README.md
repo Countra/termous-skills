@@ -1,6 +1,6 @@
 # Termous Skills
 
-Termous Skills provide six focused workflows for the Termous MCP server, covering SSH commands, system operations, scheduled tasks, files, port forwarding, and snippets, plus a desktop discovery and launch workflow for Windows, macOS, and Linux. The built-in Termous AI assistant includes the skill bundle, and external AI clients can install skills separately. Skills contain instructions, references, and optional Python helpers; Termous supplies the MCP connections, tools, permissions, and approvals. Local desktop operations require the external client's own local execution capability.
+Termous Skills provide eight focused MCP workflows for SSH commands, system operations, scheduled tasks, files, port forwarding, snippets, remote desktops, and desktop workflows, plus local desktop discovery and launch. The built-in Termous AI assistant includes the skill bundle, and external AI clients can install skills separately. Skills contain instructions, references, and optional Python helpers; Termous supplies the MCP connections, tools, permissions, and approvals. Local desktop operations require the external client's own local execution capability.
 
 ## Using the skills
 
@@ -84,7 +84,7 @@ Local filesystem mounts and their persistent caches are managed by the desktop a
 
 | Path | Purpose |
 | --- | --- |
-| `skills/` | Eight skill directories, their references, and client metadata |
+| `skills/` | Nine skill directories, their references, and client metadata |
 | [contracts/mcp-tools.json](contracts/mcp-tools.json) | Tool names, scopes, approval classes, and owning skills |
 | [tests/routing-cases.json](tests/routing-cases.json) | Direct, cross-domain, ambiguous, and negative routing cases |
 | [scripts/validate_skills.py](scripts/validate_skills.py) | Skill validation and optional comparison with Termous Core |
@@ -95,7 +95,9 @@ The default source is `../termous-skills/skills` and the default Core checkout i
 
 ## Maintaining MCP coverage
 
-`contracts/mcp-tools.json` records stable tool names, Scopes (including alternative read Scopes for shared probes), approval classes, and owning Skills without duplicating tool schemas or backend DTOs. Contract v2 covers 111 tools and 41 Scopes for MCP protocol `2025-11-25`; client authorization determines which tools are actually advertised.
+`contracts/mcp-tools.json` records stable tool names, Scopes (including alternative read Scopes for shared probes), approval classes, and owning Skills without duplicating tool schemas or backend DTOs. The current contract covers 134 tools and 45 Scopes for MCP protocol `2025-11-25`; client authorization determines which tools are actually advertised.
+
+`contracts/agent-capabilities.json` is the single source for capability navigation. It declares each tool's responsibility, discovery operations, Skill, lifecycle stage, state fields, suggested next tools, and cleanup dependencies. Core uses a generated copy to enrich descriptions and MCP `_meta` in the authorized tool catalog; the Worker uses the same contract for discovery, navigation, and progress assessment. The discovery interface accepts an explicit `operation` and resource `query`, without inferring operations from tool-name suffixes or their order in documentation. The contract does not grant permissions, execute document instructions, or duplicate business-parameter schemas. After editing it, run `python -B scripts/sync_capabilities.py --web-root ../web --backend-root ../backend`. `validate_skills.py --web-root ../web --backend-root ../backend` checks complete tool coverage, valid operations and references, and consistency of the generated copies.
 
 File management uses `termous.files.*`, `files:*`, and `termous-files`. It supports SFTP and configured S3 / MinIO, WebDAV, FTP / FTPS, and SMB profiles without granting arbitrary local browsing. External MCP no longer accepts the old tool names; update the skills and reconnect to load the tool catalog. The validator retains a frozen v1 baseline and allows only the established renames of 31 tools and 9 scopes. Profile discovery reuses the host access catalog; other permissions and approval policies remain compatible.
 

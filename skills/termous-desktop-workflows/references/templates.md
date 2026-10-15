@@ -1,18 +1,20 @@
-# 获取与确认图像模板
+# Acquiring and confirming image templates
 
-1. 通过现有远程桌面工具选择精确会话／保存配置，建立自己的观察附着并等待 ready。不得自行猜测会话 ID、代次或资产 ID。
-2. `termous.desktop_workflows.captures.create` 使用 attachment_id，获得固定原帧的 snapshot_id 和预览。默认图片最多 1600×1000；其元数据说明原始区域及缩放关系。
-3. 目标很小或文字不清时，先调用 `termous.desktop_workflows.captures.view`，从同一 snapshot_id 的固定帧生成局部视图；返回 image_view.width／height 是实际展示尺寸，source 是原帧元数据。使用 view_id 再选区，不自行换算缩放。视图继承快照到期时间，每所有者最多 8 个。
-4. 观察实际图片，再调用 `termous.desktop_workflows.templates.preview`，提交 snapshot_id、region（x、y、width、height）。传入可选 view_id 后，region 一律采用该视图展示像素。默认 image 基于返回图片；desktop 仅用于明确的原图坐标；original 非法。compact=true 只返回模板与附近上下文，节省图片用量。
+This workflow requires a `snapshot_id` from `termous.desktop_workflows.captures.create`. The `screenshot_id` returned by `termous.desktops.capture` is only for immediate input; repeated calls do not create a workflow snapshot. The full resource URI is `skill://termous-desktop-workflows/references/templates.md`.
 
-模板每边必须为 **8～512 个原始像素**，放大视图不能改变此限制。纯色、透明或缺少特征的模板会被拒绝。960 像素宽的整行文字应改为 captures.view 查看，再选择更紧凑的稳定特征。
-5. 查看图片 1 的原像素模板和图片 2 的选区上下文。确认没有截错、截断目标或包含不稳定内容；需要调整时创建新预览，不能假装已查看。可用 `termous.desktop_workflows.templates.get` 重新查看。
-6. 推荐调用 `termous.desktop_workflows.templates.match`：preview_id 和 target.asset_id 二选一。它在当前桌面只读搜索，返回候选框和分数，不点击。多个候选不代表唯一可点击，缩小区域或改选模板。
-7. 观察正确后显式调用 `termous.desktop_workflows.templates.confirm` 保存同一 preview_id，返回 asset_id。当前目标不在画面上也可以保存有效模板；不要把匹配唯一作为保存的强制条件。
-8. `termous.desktop_workflows.captures.release` 释放快照；`termous.desktop_workflows.templates.discard` 丢弃未确认预览。临时资源 5 分钟过期，过期后重新获取，禁止把新截图当作旧原帧。
+1. Use the existing remote-desktop tools to select the exact session or saved profile, create your own observation attachment, and wait until it is ready. Never guess session IDs, connection generations, or asset IDs.
+2. Call `termous.desktop_workflows.captures.create` with attachment_id to obtain a snapshot_id for a fixed source frame and its preview. The default image is at most 1600×1000; its metadata describes the source region and scale.
+3. If the target is small or text is unclear, first call `termous.desktop_workflows.captures.view` to create a detail view from the same snapshot_id's fixed frame. The returned image_view.width and image_view.height are the actual display dimensions; source contains the original-frame metadata. Use view_id for the subsequent selection instead of calculating the scale yourself. Views inherit the snapshot's expiry time, with at most 8 views per owner.
+4. Inspect the actual image, then call `termous.desktop_workflows.templates.preview` with snapshot_id and region (x, y, width, height). When the optional view_id is supplied, region always uses that view's display pixels. The default image coordinate space refers to the returned image; desktop is only for explicitly known original-image coordinates, and original is invalid. compact=true returns only the template and nearby context to reduce image usage.
 
-创建和释放是不同操作。缺少准确工具时先 `discover_tools` 搜索 `termous.desktop_workflows.captures.create`，不能拿 release 代替；释放返回 completed 后不再对同一 snapshot_id 调用 release。需要新画面时用有效 attachment_id 创建新快照。
+Each template dimension must be **8–512 original pixels**; magnifying a view does not change this limit. Solid-color, transparent, or insufficiently distinctive templates are rejected. Instead of selecting an entire 960-pixel-wide line of text, inspect it with captures.view and choose a more compact, stable feature.
+5. Inspect image 1, the template at its original pixel resolution, and image 2, the selection in context. Verify that the selection is correct, does not clip the target, and excludes unstable content. Create a new preview if adjustments are needed; never claim to have inspected an unseen image. Use `termous.desktop_workflows.templates.get` to view it again.
+6. Calling `termous.desktop_workflows.templates.match` is recommended; supply exactly one of preview_id and target.asset_id. It searches the current desktop without modifying it, returning candidate rectangles and scores without clicking. Multiple candidates do not identify a unique click target; narrow the search region or choose another template.
+7. After visually verifying the selection, explicitly call `termous.desktop_workflows.templates.confirm` with the same preview_id to save it and obtain asset_id. A valid template can be saved even when its target is absent from the current screen; a unique match is not a prerequisite for saving.
+8. `termous.desktop_workflows.captures.release` releases a snapshot; `termous.desktop_workflows.templates.discard` discards an unconfirmed preview. Temporary resources expire after 5 minutes. Acquire them again after expiry; never treat a new screenshot as the old source frame.
 
-图片正文仅使用工具图片块；定义只引用 asset_id，不粘贴 Base64。模板原图不缩小保存。没有图片能力的模型可以管理已有脚本，但不能自动完成视觉选区与确认。
+Creation and release are different operations. If the exact creation tool is missing, use `discover_tools` to find `termous.desktop_workflows.captures.create`; do not substitute release. Once release returns completed, do not call release again for the same snapshot_id. To obtain a new frame, create a new snapshot with a valid attachment_id.
 
-例如找到软件图标后双击：步骤 kind 为 pointer.click，action 为 {"button":"left","count":2}，target 为 {"kind":"image","image":{"asset_id":"工具返回的资产标识","threshold":0.95,"offset":{"x":0,"y":0}}}。运行器会重新定位，不需要先用测试定位工具发点击；建议再加 image.wait 或 image.assert 检查窗口是否打开。
+Image data is delivered only through tool image content blocks. Definitions reference asset_id only; do not paste Base64 data. Templates are saved at their original resolution without downscaling. Models without vision capabilities can manage existing scripts but cannot automatically select and confirm image regions.
+
+For example, to locate an application icon and double-click it, set the step kind to pointer.click, action to {"button":"left","count":2}, and target to {"kind":"image","image":{"asset_id":"asset_id_returned_by_the_tool","threshold":0.95,"offset":{"x":0,"y":0}}}. The runner locates the target again before clicking; the match-testing tool does not dispatch clicks. Adding image.wait or image.assert is recommended to verify that the window opened.

@@ -5,6 +5,10 @@ description: Use Termous MCP to search, read, organize, create, update, delete, 
 
 # Termous Snippets
 
+Scope and result semantics: list returns metadata only; get returns the full command. Creating, editing, or deleting a snippet changes the command library without executing commands. Execution requires a separate user request and an SSH target; use commands.dispatch and check the task's terminal state. Concurrent updates require the latest expected_updated_at. Deleting a group preserves its snippets.
+
+Built-in Agent library resource: `skill://termous-snippets/references/library-workflows.md`. For execution and conflicts, read `skill://termous-snippets/references/execution-and-conflicts.md`. Repeatedly reading or saving a snippet, or changing a request ID, does not execute the command or resolve an error.
+
 Use Termous MCP to manage the command library stored by Termous. Reading or changing a snippet does not execute it. Execute selected content only through the separate SSH command tools.
 
 If an SSH reference becomes unavailable, ask the user to restore the connection or replace the reference in the UI. Core restores the connection by creating an MCP session with a new ID from the original SSH profile and updating the binding only after the session is ready. This requires no additional MCP tool; the model must not restore the connection itself, replay commands, or resume a paused message queue. Use the new ID only after it appears in the current run's system snapshot. Existing tasks retain their original identities. File profile references do not participate in SSH recovery.
