@@ -20,6 +20,8 @@ Built-in Agent reference URIs: `skill://termous-desktop-workflows/references/tem
 
 ## Required boundaries
 
+- Reuse the exact Profile's existing desktop session for previews, execution, and debugging. Prefer a verified session_id and connection_generation; a profile_id target also reuses first and creates only when none exists. Keep connections by default. Obtain fresh observation attachments and control grants for the current Run; these do not require a new desktop connection. See the runs reference for explicit temporary-connection cleanup.
+
 - Use the display-pixel coordinates of the returned image_view. For small targets, inspect a magnified view with captures.view before templates.preview. Core maps coordinates to original pixels; do not calculate the scale manually or invent an original coordinate mode.
 - Each template dimension must be 8–512 original pixels. Select compact, stable features, inspect the preview, explicitly confirm it, and only then reference asset_id. Testing the match first is recommended; the test does not click, and a valid template can still be saved when it does not match the current screen.
 - Honor any execution budget explicitly supplied for the current Run. When enabled, the budget for the same desktop-selection workflow does not reset after a new capture or a change of request_id. Budgets are disabled by default; do not impose a fixed attempt limit yourself. Use diagnostics to adjust the approach after repeated failures, and tell the user when a required capability or information is missing.

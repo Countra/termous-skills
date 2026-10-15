@@ -323,13 +323,13 @@
     {
       "id": "desktop_sessions", "group": "desktop_observe", "prefix": "termous.desktops.",
       "keywords": "远程 桌面 连接 观察 截图 desktop capture screenshot", "skill": "skill://termous-remote-desktop/SKILL.md",
-      "purpose": "Immediate remote-desktop observation returns screenshot_id for immediate input; fixed-frame snapshots and templates belong to workflows. An attachment enables observation only and does not grant control. A failed state must not be treated as ready.",
+      "purpose": "Reuse existing sessions for the exact Profile; new observation attachments and grants do not require new connections. Immediate remote-desktop observation returns screenshot_id for immediate input; fixed-frame snapshots and templates belong to workflows. An attachment enables observation only and does not grant control. A failed state must not be treated as ready.",
       "entry": ["list", "get", "attach", "capture"], "recovery": ["get"],
       "operations": {"list": ["read"], "connect": ["connect"], "get": ["read"], "attach": ["attach"], "capture": ["capture"], "detach": ["detach"], "close": ["disconnect"]},
       "evidence": {"states": ["attachment.state", "session.status"]},
       "steps": [
         {"tools": ["list"], "role": "list", "next": ["get", "attach"], "guidance": "list only enumerates sessions; it does not attach. After selecting a session, revalidate connection_generation with get, then attach. Repeating list does not perform attach."},
-        {"tools": ["connect"], "role": "submit", "next": ["get", "attach"], "cleanup": ["close"], "guidance": "After the connection is registered, query the same session_id with get and attach when ready. Do not repeat connect while waiting for the connection."},
+        {"tools": ["connect"], "role": "submit", "next": ["get", "attach"], "guidance": "connect ensures a connection for the exact Profile: reuse first and create only when none exists. created describes this request, not ownership. Query the returned session_id with get, then obtain a current-Run attachment. Keep the connection by default; do not repeat connect, close, or create a replacement to bypass waiting, failed states, or control conflicts."},
         {"tools": ["get"], "role": "inspect", "next": ["attach"]},
         {"tools": ["attach"], "role": "submit", "next": ["get"], "cleanup": ["detach"]},
         {"tools": ["capture"], "role": "observe", "evidence": "image", "next": ["termous.desktop_workflows.captures.create"], "guidance": "This call only observes the desktop and returns screenshot_id; it does not create a workflow snapshot. For a template or fixed frame, use termous.desktop_workflows.captures.create(attachment_id), which returns snapshot_id. If observation alone is needed, use the existing result to decide the next action."},
@@ -397,7 +397,7 @@
     {
       "id": "workflow_runs", "group": "workflow_runs", "prefix": "termous.desktop_workflows.runs.",
       "keywords": "workflow 脚本 运行 报告 等待 暂停 取消 run report wait", "skill": "skill://termous-desktop-workflows/references/runs.md",
-      "purpose": "Run a pinned script version; run_id identifies the execution. Starting, pausing, or requesting cancellation does not establish completion. Wait for a terminal state and read the per-step report. Never automatically replay input with an uncertain outcome.",
+      "purpose": "Run a pinned script version on a verified existing session_id and connection_generation when available. Profile targets also reuse first for execution and debugging, creating only when no matching session exists. Connections are retained by default; explicit keep_connection=false only cleans up a connection created by that run that is still exclusive and on the same generation. Each run obtains its own authorization. run_id identifies the execution. Starting, pausing, or requesting cancellation does not establish completion. Wait for a terminal state and read the per-step report. Never automatically replay input with an uncertain outcome.",
       "entry": ["start", "get", "wait_workflow_run"], "recovery": ["get"],
       "operations": {"list": ["read"], "get": ["read"], "wait_workflow_run": ["read"], "start": ["run"], "control": ["cancel", "pause", "resume"]},
       "evidence": {"states": ["report.run.state", "run.state"], "volatile": ["report.run.updated_at", "run.updated_at"]},

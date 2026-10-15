@@ -10,11 +10,15 @@ Use the available `termous.desktops.*` tools. Termous must remain running. Tool 
 ## Target and connection
 
 - Discover saved profiles with `termous.hosts.access_profiles.list` when needed. Choose an exact desktop Profile ID; do not substitute an SSH or file Profile.
-- `termous.desktops.list` and `termous.desktops.get` return existing sessions. `termous.desktops.connect` accepts exactly one of `profile_id` or `host_id` (the host's default desktop profile).
+- First use `termous.desktops.list`, then `termous.desktops.get` to verify an existing session for the exact Profile ID. Prefer that session for immediate input and workflow runs. A matching display name or host alone is insufficient.
+- `termous.desktops.connect` ensures a connection for exactly one of `profile_id` or `host_id` (the host's default desktop profile). It reuses an existing session, creates only when none exists, and retains the connection. Its response keeps `session` and adds `created`, which identifies creation by this request; `session.owned` is separate and does not imply a new connection.
+- When several sessions match, Core prefers ready sessions by most recent successful use, then creation time descending and ID ascending; otherwise it selects the existing connection in progress. Wait on that same ID during connection or authentication. Failed, stopping, or busy sessions do not authorize a replacement or automatic takeover. An explicit session ID and generation must never silently switch targets.
 - `termous.desktops.attach` binds the selected session and its current `connection_generation`. It starts as observation only. Query `termous.desktops.get` with `attachment_id`, or repeat the original attach request, until ready. `waiting_user_action` requires completion in Termous's trusted UI. Do not approve certificates or supply secrets through another tool.
-- Connecting and attaching are separate. `termous.desktops.detach` releases your attachment; `termous.desktops.close` may close only a connection you created after all attachments and viewers are gone.
+- Connecting and attaching are separate. Reusing a session does not transfer ownership or restore old attachments or grants; each Run obtains its own authorization. Release your grant and call `termous.desktops.detach` when finished, retaining the connection by default. Use `termous.desktops.close` only when explicitly needed and authorized, and only for a connection you created after all attachments and external viewers are gone. A ready, unused VNC execution host remains with the connection without retaining control grants; it does not prevent cleanup of an otherwise exclusive temporary connection unless the user has opened its viewing window.
 
 ## Observe, approve, act, verify
+
+Retaining a connection does not override the application's configured RDP unattended-session timeout. Recheck the session before later use; an expired explicit session target must not be silently replaced.
 
 1. Capture the desktop with `termous.desktops.capture`. Read both the image and its coordinate metadata. Default output is at most 1600×1000; use a crop or explicit larger size for detail.
 2. Before input, call `termous.desktops.control.acquire`. The application approves one control grant, at most 30 minutes with a 15-minute inactivity limit. `takeover=true` explicitly permits taking an occupied desktop and switching an existing VNC viewer to its managed host. Preserve the user's requested target and action scope.

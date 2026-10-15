@@ -1,5 +1,7 @@
 # Acquiring and confirming image templates
 
+Reuse a verified existing desktop session for the exact Profile. Obtain your own current-Run observation attachment; a new attachment does not require a new connection. Release your attachment when finished and retain the connection.
+
 This workflow requires a `snapshot_id` from `termous.desktop_workflows.captures.create`. The `screenshot_id` returned by `termous.desktops.capture` is only for immediate input; repeated calls do not create a workflow snapshot. The full resource URI is `skill://termous-desktop-workflows/references/templates.md`.
 
 1. Use the existing remote-desktop tools to select the exact session or saved profile, create your own observation attachment, and wait until it is ready. Never guess session IDs, connection generations, or asset IDs.
