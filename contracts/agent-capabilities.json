@@ -364,7 +364,8 @@
       "entry": ["schema", "list", "get", "create"], "recovery": ["schema", "get"],
       "operations": {"schema": ["read"], "get": ["read"], "versions": ["read"], "validate": ["validate", "read"], "list": ["read"], "create": ["create", "update"], "update": ["update"], "duplicate": ["copy"], "restore": ["restore"], "delete": ["delete"]},
       "steps": [
-        {"tools": ["schema", "get", "versions", "validate"], "role": "inspect"},
+        {"tools": ["schema", "versions", "validate"], "role": "inspect"},
+        {"tools": ["get"], "role": "inspect", "next": ["update", "validate"], "guidance": "Reading a definition does not change it. To repair a script, read the latest revision, then call update with expected_revision and the intended changes. Use the revision returned by a successful update; do not infer a new version from narration or a run report. Details: skill://termous-desktop-workflows/references/editing.md."},
         {"tools": ["list"], "role": "list", "next": ["get"]},
         {"tools": ["create", "update", "duplicate", "restore", "delete"], "role": "mutate", "next": ["get"]}
       ]
@@ -397,14 +398,15 @@
     {
       "id": "workflow_runs", "group": "workflow_runs", "prefix": "termous.desktop_workflows.runs.",
       "keywords": "workflow 脚本 运行 报告 等待 暂停 取消 run report wait", "skill": "skill://termous-desktop-workflows/references/runs.md",
-      "purpose": "Run a pinned script version on a verified existing session_id and connection_generation when available. Profile targets also reuse first for execution and debugging, creating only when no matching session exists. Connections are retained by default; explicit keep_connection=false only cleans up a connection created by that run that is still exclusive and on the same generation. Each run obtains its own authorization. run_id identifies the execution. Starting, pausing, or requesting cancellation does not establish completion. Wait for a terminal state and read the per-step report. Never automatically replay input with an uncertain outcome.",
-      "entry": ["start", "get", "wait_workflow_run"], "recovery": ["get"],
+      "purpose": "Execute a saved, pinned script version; runs.start does not edit the script. Read runs.get for the original run_id and inspect accepted, failed, and uncertain steps before deciding what to do next. To repair the script, read termous.desktop_workflows.get, then use update with the current expected_revision; see skill://termous-desktop-workflows/references/editing.md. Never automatically replay uncertain input. Execution and debugging reuse the exact Profile's existing session first, retain connections by default, and obtain a separate grant for each run.",
+      "entry": ["start", "get", "wait_workflow_run"], "recovery": ["get", "termous.desktop_workflows.get"],
       "operations": {"list": ["read"], "get": ["read"], "wait_workflow_run": ["read"], "start": ["run"], "control": ["cancel", "pause", "resume"]},
       "evidence": {"states": ["report.run.state", "run.state"], "volatile": ["report.run.updated_at", "run.updated_at"]},
       "steps": [
         {"tools": ["list"], "role": "list", "next": ["get"]},
-        {"tools": ["get", "wait_workflow_run"], "role": "poll"},
-        {"tools": ["start", "control"], "role": "submit", "next": ["get", "wait_workflow_run"], "cleanup": ["get", "control", "wait_workflow_run"]}
+        {"tools": ["get", "wait_workflow_run"], "role": "poll", "next": ["termous.desktop_workflows.get"]},
+        {"tools": ["start"], "role": "submit", "next": ["get", "wait_workflow_run", "termous.desktop_workflows.get"], "cleanup": ["get", "control", "wait_workflow_run"], "guidance": "runs.start executes a saved version; it cannot update a script. The same client_request_id and arguments return the original run_id with its current state, even after failure; they do not rerun it. Query that run, including its step results. If a script change is needed, read termous.desktop_workflows.get, then update with expected_revision and use the returned revision. A new request ID is only for a new authorized execution after checking prior side effects, never a workaround for uncertain delivery. See skill://termous-desktop-workflows/references/editing.md."},
+        {"tools": ["control"], "role": "submit", "next": ["get", "wait_workflow_run"], "cleanup": ["get", "control", "wait_workflow_run"], "guidance": "Control changes only the existing run. Repeating the same request returns that run's current state without reapplying the command. It cannot edit a script or restart a terminal run. Query the report to verify the actual result."}
       ]
     },
     {
