@@ -359,7 +359,7 @@
         {"tools": ["get", "attach"], "path": "attachment.state", "values": ["failed", "invalidated", "detached"], "next": ["get"], "guidance": "A failed state must not be treated as ready. Repeatedly creating attachments does not repair the execution endpoint. Check the session and execution endpoint first; if they remain unavailable, explain the blocker."},
         {"tools": ["get", "attach"], "path": "session.status", "values": ["failed", "stopping", "closed"], "next": ["get"], "guidance": "A failed state must not be treated as ready. Check the current session; creating an attachment cannot repair the underlying connection."},
         {"tools": ["get", "attach"], "path": "attachment.grant.id", "exists": true, "next": ["termous.desktops.keyboard.shortcut", "termous.desktops.keyboard.key", "termous.desktops.keyboard.text", "termous.desktops.pointer.click", "termous.desktops.pointer.scroll", "capture"], "guidance": "本轮附着回执已包含控制授权；控制权只是输入前置条件。若目标需要操作应用，使用现有 grant 选择键盘或鼠标工具，无需重复申请或先释放。准确动作尚未加载时调用 discover_tools。"},
-        {"tools": ["get", "attach"], "path": "attachment.state", "values": ["ready"], "next": ["capture", "termous.desktops.control.acquire"], "guidance": "The attachment is ready; use the returned attachment.id. Use capture for observation. Keyboard and mouse input additionally require the actual grant.id returned by control.acquire; release only relinquishes control."},
+        {"tools": ["get", "attach"], "path": "attachment.state", "values": ["ready"], "next": ["capture", "termous.desktops.control.acquire"], "guidance": "观察附着已就绪，使用返回的 attachment.id 截图；当前没有确认可用的 grant，尚不能输入。先处理最近的审批或占用错误，仅在目标确需输入且条件允许时申请控制权。get 只查询，不会解除占用；release 只归还控制权。"},
         {"tools": ["get", "attach"], "path": "attachment", "exists": true, "next": ["get"], "guidance": "The observation attachment is not yet confirmed ready. Wait with get(attachment_id, wait_ms); do not fabricate grant_id."}
       ]
     },
@@ -377,7 +377,7 @@
         {"tools": ["control.release"], "role": "close", "next": [], "guidance": "本次只归还控制权，释放完成不要求再次申请。若后续目标确实需要新的输入，先核验状态，再通过 discover_tools 查找对应操作；不要反复归还或自动接管人工收回的控制权。", "completion": {"fields": ["attachment_id", "grant_id"], "flag": "completed", "next": "control.acquire"}}
       ],
       "cases": [
-        {"tools": ["control.acquire"], "errors": ["unknown"], "codes": ["desktop_control_already_held", "desktop_control_locked"], "next": ["get"], "guidance": "先查询当前 attachment_id 核验控制权。若本入口已持有有效 grant，使用该授权操作；旧版占用错误不能证明是其他入口占用。不要仅因这条错误先释放、反复申请或自动 takeover。"},
+        {"tools": ["control.acquire"], "errors": ["unknown"], "codes": ["desktop_control_already_held", "desktop_control_locked"], "next": ["get"], "guidance": "本次申请未取得新的控制权，审批通过也不能消除执行占用。先查询当前 attachment_id；有有效 grant 就使用，旧版占用错误不能证明是其他入口。相同请求 ID 只取回原结果，换 ID 不会解决占用；无 grant 且仍占用时，等待条件变化，或仅在用户授权接管时申请 takeover。不要仅因此错误先释放或反复申请。"},
         {"tools": ["control.acquire"], "path": "control.attachment.grant.id", "exists": true, "next": ["termous.desktops.keyboard.shortcut", "termous.desktops.keyboard.key", "termous.desktops.keyboard.text", "termous.desktops.pointer.click", "termous.desktops.pointer.scroll", "capture"], "guidance": "已取得本轮 grant；若目标需要操作应用，下一步选择实际键盘或鼠标输入并观察结果。不要继续申请或释放来代替输入。缺少准确操作时使用 discover_tools 搜索 desktop_input 的具体动作。"}
       ]
     },
