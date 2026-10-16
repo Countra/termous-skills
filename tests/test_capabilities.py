@@ -38,7 +38,7 @@ class CapabilityTests(unittest.TestCase):
                 path = root / "skills" / uri.removeprefix("skill://")
                 path.parent.mkdir(parents=True, exist_ok=True)
                 path.write_text("流程说明", encoding="utf-8")
-            for change in ("missing", "duplicate", "reference", "resource", "operation_missing", "operation_unknown", "settled_without_states", "settled_invalid", "recovery_error", "recovery_target", "unreachable_target", "empty_error", "entry_overflow", "progress_path", "progress_collection", "progress_target"):
+            for change in ("missing", "duplicate", "reference", "resource", "operation_missing", "operation_unknown", "settled_without_states", "settled_invalid", "approval_path", "approval_type", "recovery_error", "recovery_target", "unreachable_target", "empty_error", "entry_overflow", "progress_path", "progress_collection", "progress_target"):
                 catalog = json.loads(json.dumps(source))
                 family = catalog["capabilities"][0]
                 if change == "missing":
@@ -55,6 +55,8 @@ class CapabilityTests(unittest.TestCase):
                     family["evidence"] = {"settled": ["running"]}
                 elif change == "settled_invalid":
                     family["evidence"] = {"states": ["instance.status"], "settled": [None]}
+                elif change.startswith("approval_"):
+                    family["evidence"] = {"approvals": ["control[0].approval"] if change == "approval_path" else "control.approval"}
                 elif change == "recovery_error":
                     family["cases"] = [{"tools": ["list"], "errors": ["invented"], "next": [], "guidance": "说明"}]
                 elif change == "recovery_target":

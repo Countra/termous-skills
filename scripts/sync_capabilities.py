@@ -2,6 +2,7 @@
 
 import argparse
 import json
+import re
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -30,6 +31,10 @@ def validate_catalog(root=ROOT):
             raise ValueError("能力定义重复或缺少职责、入口和恢复说明")
         ids.add(capability["id"])
         evidence = capability.get("evidence", {})
+        if "approvals" in evidence and (not isinstance(evidence["approvals"], list) or not evidence["approvals"]
+                                        or any(not isinstance(path, str) or not re.fullmatch(r"[a-z][a-z0-9_]*(?:\.[a-z][a-z0-9_]*)*", path)
+                                               for path in evidence["approvals"])):
+            raise ValueError("审批证据必须使用非空字段路径列表")
         if "settled" in evidence and (not evidence.get("states") or not isinstance(evidence["settled"], list)
                                       or not evidence["settled"] or any(not isinstance(state, str) or not state for state in evidence["settled"])):
             raise ValueError("资源就绪态必须引用状态字段并声明非空状态枚举")

@@ -345,7 +345,7 @@
         {"tools": ["connect"], "role": "submit", "next": ["get", "attach"], "progresses": {"tools": ["list"], "path": "session.id", "collection": true}, "guidance": "connect ensures a connection for the exact Profile: reuse first and create only when none exists. created describes this request, not ownership. Query the returned session_id with get, then obtain a current-Run attachment. Keep the connection by default; do not repeat connect, close, or create a replacement to bypass waiting, failed states, or control conflicts."},
         {"tools": ["get"], "role": "inspect", "next": ["attach"], "progresses": {"tools": ["list"], "path": "session.id", "collection": true}, "guidance": "get only reads an existing session/attachment; wait_ms waits on that object. It cannot connect or restore a connection. Use connect for an authorized Profile when needed; never replace a bound Session."},
         {"tools": ["attach"], "role": "submit", "next": ["get"], "cleanup": ["detach"]},
-        {"tools": ["capture"], "role": "observe", "evidence": "image", "next": ["termous.desktop_workflows.captures.create"], "guidance": "This call only observes the desktop and returns screenshot_id; it does not create a workflow snapshot. For a template or fixed frame, use termous.desktop_workflows.captures.create(attachment_id), which returns snapshot_id. If observation alone is needed, use the existing result to decide the next action."},
+        {"tools": ["capture"], "role": "observe", "evidence": "image", "next": [], "guidance": "本次仅观察画面并返回 screenshot_id，尚未操作应用。即时操作需有效 grant 与键鼠工具；准确操作未加载时使用 discover_tools。仅在目标需要固定帧或模板时发现 termous.desktop_workflows.captures.create(attachment_id)，取得独立的 snapshot_id。"},
         {"tools": ["detach"], "role": "close", "completion": {"fields": ["attachment_id"], "flag": "completed", "next": "attach"}},
         {"tools": ["close"], "role": "close", "completion": {"fields": ["session_id", "connection_generation"], "flag": "completed", "next": "connect"}}
       ],
@@ -358,6 +358,7 @@
         {"tools": ["connect", "get"], "path": "session.status", "values": ["connecting", "reconnecting", "waiting_credentials", "waiting_certificate", "waiting_user_action"], "next": ["get"], "guidance": "The session is not ready. Use get on the same ID and wait for connection or authentication; do not replace it or attach yet."},
         {"tools": ["get", "attach"], "path": "attachment.state", "values": ["failed", "invalidated", "detached"], "next": ["get"], "guidance": "A failed state must not be treated as ready. Repeatedly creating attachments does not repair the execution endpoint. Check the session and execution endpoint first; if they remain unavailable, explain the blocker."},
         {"tools": ["get", "attach"], "path": "session.status", "values": ["failed", "stopping", "closed"], "next": ["get"], "guidance": "A failed state must not be treated as ready. Check the current session; creating an attachment cannot repair the underlying connection."},
+        {"tools": ["get", "attach"], "path": "attachment.grant.id", "exists": true, "next": ["termous.desktops.keyboard.shortcut", "termous.desktops.keyboard.key", "termous.desktops.keyboard.text", "termous.desktops.pointer.click", "termous.desktops.pointer.scroll", "capture"], "guidance": "本轮附着回执已包含控制授权；控制权只是输入前置条件。若目标需要操作应用，使用现有 grant 选择键盘或鼠标工具，无需重复申请或先释放。准确动作尚未加载时调用 discover_tools。"},
         {"tools": ["get", "attach"], "path": "attachment.state", "values": ["ready"], "next": ["capture", "termous.desktops.control.acquire"], "guidance": "The attachment is ready; use the returned attachment.id. Use capture for observation. Keyboard and mouse input additionally require the actual grant.id returned by control.acquire; release only relinquishes control."},
         {"tools": ["get", "attach"], "path": "attachment", "exists": true, "next": ["get"], "guidance": "The observation attachment is not yet confirmed ready. Wait with get(attachment_id, wait_ms); do not fabricate grant_id."}
       ]
@@ -368,12 +369,16 @@
       "purpose": "Immediate keyboard and mouse input requires a control grant for the current Run; mouse input uses a valid screenshot_id. accepted means protocol acceptance only; observe the application result. Do not automatically reclaim control after the user takes it back.",
       "entry": ["control.acquire", "keyboard.shortcut", "keyboard.text", "pointer.click"], "recovery": ["operations.get", "get"], "missing": ["get"],
       "operations": {"control.acquire": ["acquire"], "pointer.move": ["move"], "pointer.click": ["click"], "pointer.scroll": ["scroll"], "pointer.drag": ["drag"], "keyboard.key": ["key"], "keyboard.shortcut": ["shortcut"], "keyboard.text": ["text"], "clipboard.set_text": ["text"], "resize": ["resize"], "operations.get": ["read"], "control.release": ["release"]},
-      "evidence": {"states": ["operation.state"]},
+      "evidence": {"states": ["operation.state", "control.attachment.state"], "approvals": ["control.approval", "approval"]},
       "steps": [
-        {"tools": ["control.acquire"], "role": "submit", "next": ["capture"], "cleanup": ["control.release", "operations.get"], "guidance": "Use control.attachment.grant.id. Release the direct-input grant before starting a workflow; the workflow requests a separate grant."},
+        {"tools": ["control.acquire"], "role": "submit", "next": ["get"], "cleanup": ["control.release", "operations.get"], "guidance": "申请回执不等于已取得控制权；核对 control.approval 与 control.attachment.grant。有效 grant 是键鼠输入的前置条件，不能用反复 acquire 或 release 代替操作应用。仅当确需改用工作流时先归还直接输入授权。"},
         {"tools": ["pointer.move", "pointer.click", "pointer.scroll", "pointer.drag", "keyboard.key", "keyboard.shortcut", "keyboard.text", "clipboard.set_text", "resize"], "role": "input", "next": ["operations.get", "capture"], "cleanup": ["control.release", "operations.get"]},
         {"tools": ["operations.get"], "role": "poll", "next": ["capture"]},
-        {"tools": ["control.release"], "role": "close", "guidance": "This only releases control; it does not acquire it. If input is needed, discover control.acquire. Do not use release to request control or automatically reclaim control taken back by the user.", "completion": {"fields": ["attachment_id", "grant_id"], "flag": "completed", "next": "control.acquire"}}
+        {"tools": ["control.release"], "role": "close", "next": [], "guidance": "本次只归还控制权，释放完成不要求再次申请。若后续目标确实需要新的输入，先核验状态，再通过 discover_tools 查找对应操作；不要反复归还或自动接管人工收回的控制权。", "completion": {"fields": ["attachment_id", "grant_id"], "flag": "completed", "next": "control.acquire"}}
+      ],
+      "cases": [
+        {"tools": ["control.acquire"], "errors": ["unknown"], "codes": ["desktop_control_already_held", "desktop_control_locked"], "next": ["get"], "guidance": "先查询当前 attachment_id 核验控制权。若本入口已持有有效 grant，使用该授权操作；旧版占用错误不能证明是其他入口占用。不要仅因这条错误先释放、反复申请或自动 takeover。"},
+        {"tools": ["control.acquire"], "path": "control.attachment.grant.id", "exists": true, "next": ["termous.desktops.keyboard.shortcut", "termous.desktops.keyboard.key", "termous.desktops.keyboard.text", "termous.desktops.pointer.click", "termous.desktops.pointer.scroll", "capture"], "guidance": "已取得本轮 grant；若目标需要操作应用，下一步选择实际键盘或鼠标输入并观察结果。不要继续申请或释放来代替输入。缺少准确操作时使用 discover_tools 搜索 desktop_input 的具体动作。"}
       ]
     },
     {
