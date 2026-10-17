@@ -38,7 +38,7 @@ class CapabilityTests(unittest.TestCase):
                 path = root / "skills" / uri.removeprefix("skill://")
                 path.parent.mkdir(parents=True, exist_ok=True)
                 path.write_text("流程说明", encoding="utf-8")
-            for change in ("missing", "duplicate", "reference", "resource", "operation_missing", "operation_unknown", "settled_without_states", "settled_invalid", "approval_path", "approval_type", "recovery_error", "recovery_target", "unreachable_target", "empty_error", "entry_overflow", "progress_path", "progress_collection", "progress_target"):
+            for change in ("missing", "duplicate", "reference", "resource", "operation_missing", "operation_unknown", "settled_without_states", "settled_invalid", "approval_path", "approval_type", "recovery_error", "recovery_target", "unreachable_target", "empty_error", "entry_overflow", "progress_path", "progress_collection", "progress_target", "preparation_type", "preparation_empty", "preparation_length"):
                 catalog = json.loads(json.dumps(source))
                 family = catalog["capabilities"][0]
                 if change == "missing":
@@ -68,6 +68,8 @@ class CapabilityTests(unittest.TestCase):
                     family["cases"] = [{"tools": ["list"], "path": "items", "errors": ["missing"], "empty": True, "omittedIsEmpty": True, "next": [], "guidance": "说明"}]
                 elif change == "entry_overflow":
                     catalog["skillEntries"][next(iter(catalog["skillEntries"]))] = ["termous.hosts.list"] * 9
+                elif change.startswith("preparation_"):
+                    family["steps"][0]["preparation"] = {"preparation_type": [], "preparation_empty": " ", "preparation_length": "前" * 1201}[change]
                 elif change.startswith("progress_"):
                     family["steps"][0]["progresses"] = {"tools": ["access_profiles.list"], "path": "catalog.id"}
                     progresses = family["steps"][0]["progresses"]

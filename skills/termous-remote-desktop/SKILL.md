@@ -22,12 +22,25 @@ Use the available `termous.desktops.*` tools. Termous must remain running. Tool 
 Retaining a connection does not override the application's configured RDP unattended-session timeout. Recheck the session before later use; an expired explicit session target must not be silently replaced.
 
 1. Capture the desktop with `termous.desktops.capture`. Read both the image and its coordinate metadata. Default output is at most 1600×1000; use a crop or explicit larger size for detail.
-2. Before input, call `termous.desktops.control.acquire`. The application approves one control grant, at most 30 minutes with a 15-minute inactivity limit. `takeover=true` explicitly permits taking an occupied desktop and switching an existing VNC viewer to its managed host. Preserve the user's requested target and action scope.
+2. 输入前先使用本轮 `get(attachment_id)` 的结果核验 `grant` 和 `control`；已有有效查询就复用。`ready` 仅表示可观察，无 grant 不等于控制入口空闲。按下表选择 `termous.desktops.control.acquire` 的首次申请方式。应用仍对控制授权进行审批，最长 30 分钟，空闲 15 分钟释放；保留用户指定的目标和操作范围。
 3. Retain the returned `grant.id` and supply it as `grant_id` for every input and release request. Mouse tools also require your `screenshot_id`; default coordinates refer to the returned image, including crop and scale. Use `coordinate_space=desktop` only with known desktop coordinates.
    控制权只是输入前置条件，不会打开应用或输入内容。取得有效 grant 后，按目标使用键盘或鼠标工具；没有准确声明时先通过 `discover_tools` 搜索，例如 `group=desktop_input, operation=shortcut`，不要用 acquire 或 release 代替输入。
 4. Use complete gestures: click, double-click, scroll, drag, key, shortcut, or Unicode text. `termous.desktops.keyboard.key` uses `KeyboardEvent.code`, such as `Enter`; shortcuts use an ordered `codes` array. A drag has 2–64 points and lasts at most 2000 ms. Do not leave keys pressed across calls.
 5. Capture again to verify the observed result. Accepted input means the protocol accepted it; it does not prove that the target application completed the intended action.
 6. Use `termous.desktops.control.release` for the specific grant and detach when finished. Closing the hosted VNC viewing window only hides it. The user can reclaim control at any time; do not reacquire automatically after manual reclaim.
+
+首次申请的选择依据：
+
+| `attachment.control.state` | 下一步 |
+| --- | --- |
+| `held` 且 grant 有效 | 直接使用本附着的 grant 输入，不重复申请或先释放。 |
+| `held` 但 grant 缺失或过期 | 查询同一附着重新核验，不使用旧授权输入或直接再次申请；核验后仍不一致则说明阻碍，避免反复查询。 |
+| `available` | 需要输入时提交一次普通申请，省略 takeover 或设为 false。 |
+| `takeover_required` | 已明确授权接管此目标时，首次即提交 takeover=true，沿用现有审批；无需先用 false 试探。授权不明确时说明影响并澄清一次。 |
+| `blocked` | 按 reason 处理，takeover 不会解决该条件。remote_viewer 需要用户结束远程观看；desktop_not_ready 等待执行端恢复；cleanup_pending 等待清理；cleanup_uncertain 报告未确认；grant_needs_verification 核验授权变化，不自动夺回人工收回的控制。 |
+| 字段缺失 | 占用未知，不能据此认定空闲。旧 Core 可能不提供该字段，不要循环查询缺失信息；依据已知状态和用户授权选择申请方式。 |
+
+普通 RDP 窗口可能已持有本地控制权；VNC 的 viewer_switch 表示需要切换观看入口，不代表连接失败。用户要求打开应用不自动等于允许打断其他控制者；已明确授权的接管也不需要重复询问。上述状态是瞬时只读建议，不预留控制权；查询后仍可能发生竞争，应按实际申请结果处理。
 
 `termous.desktops.clipboard.set_text` changes the **target** text clipboard. It does not import the local clipboard or transfer files. RDP shared drives remain visible according to the user's existing configuration. VNC resize is currently unsupported. These tools provide pixels and coordinates, not OCR, a DOM, an accessibility tree, or arbitrary script execution.
 

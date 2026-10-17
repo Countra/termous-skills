@@ -50,6 +50,8 @@ def validate_catalog(root=ROOT):
         for step in capability["steps"]:
             if step["role"] not in ROLES or not step["tools"]:
                 raise ValueError("能力阶段不合法")
+            if "preparation" in step and (not isinstance(step["preparation"], str) or not step["preparation"].strip() or len(step["preparation"]) > 1200):
+                raise ValueError("调用前说明必须为非空且不超过 1200 字符的文本")
             for short_name in step["tools"]:
                 name = full_name(capability, short_name)
                 if name in names:
@@ -119,7 +121,7 @@ def synchronize(check=False, web_root=None, backend_root=None):
                 raise ValueError(f"能力契约生成副本过期，请运行 sync_capabilities.py: {target}")
         else:
             target.parent.mkdir(parents=True, exist_ok=True)
-            target.write_text(content, encoding="utf-8")
+            target.write_text(content, encoding="utf-8", newline="\n")
     return len(catalog["capabilities"])
 
 

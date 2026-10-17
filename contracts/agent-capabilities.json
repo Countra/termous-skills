@@ -77,7 +77,7 @@
       "operations": {"dispatch": ["run"], "get": ["read"], "read_output": ["read"], "interrupt": ["cancel", "stop"]},
       "evidence": {"states": ["task.status"], "volatile": ["task.updated_at"]},
       "steps": [
-        {"tools": ["dispatch"], "role": "submit", "next": ["get", "read_output"], "cleanup": ["get", "interrupt"]},
+        {"tools": ["dispatch"], "role": "submit", "preparation": "使用当前准确的 SSH 会话和已授权命令；已有就绪的系统验证绑定或本轮有效查询就直接复用，否则从 sessions.get 核验 status=connected、phase=ready。不要混用桌面或文件会话 ID。已有任务或不确定执行结果时查询原 task_id，不换请求 ID 重发。", "next": ["get", "read_output"], "cleanup": ["get", "interrupt"]},
         {"tools": ["get"], "role": "poll", "next": ["read_output"]},
         {"tools": ["read_output"], "role": "result", "next": ["get"]},
         {"tools": ["interrupt"], "role": "cancel", "next": ["get"]}
@@ -122,7 +122,7 @@
       "operations": {"upload": ["upload"], "download": ["download"], "remote_copy": ["copy"], "get": ["read"], "cancel": ["cancel"]},
       "evidence": {"states": ["transfer.status"], "volatile": ["transfer.updated_at"]},
       "steps": [
-        {"tools": ["upload", "download", "remote_copy"], "role": "submit", "next": ["get"], "cleanup": ["get", "cancel"]},
+        {"tools": ["upload", "download", "remote_copy"], "role": "submit", "preparation": "先明确传输方向，核验各远端属于当前 MCP 客户端的 file_session_id、当前 connection_generation 和引擎能力；下载和远端复制用 stat 核对远端源，明确目标及覆盖策略。上传源是 Core 所在机器的本机路径，由 Core 核验，不能用远端 stat 查询。复用已有有效查询结果；新传输才创建新请求 ID。", "next": ["get"], "cleanup": ["get", "cancel"]},
         {"tools": ["get"], "role": "poll"},
         {"tools": ["cancel"], "role": "cancel", "next": ["get"]}
       ]
@@ -358,8 +358,12 @@
         {"tools": ["connect", "get"], "path": "session.status", "values": ["connecting", "reconnecting", "waiting_credentials", "waiting_certificate", "waiting_user_action"], "next": ["get"], "guidance": "The session is not ready. Use get on the same ID and wait for connection or authentication; do not replace it or attach yet."},
         {"tools": ["get", "attach"], "path": "attachment.state", "values": ["failed", "invalidated", "detached"], "next": ["get"], "guidance": "A failed state must not be treated as ready. Repeatedly creating attachments does not repair the execution endpoint. Check the session and execution endpoint first; if they remain unavailable, explain the blocker."},
         {"tools": ["get", "attach"], "path": "session.status", "values": ["failed", "stopping", "closed"], "next": ["get"], "guidance": "A failed state must not be treated as ready. Check the current session; creating an attachment cannot repair the underlying connection."},
+        {"tools": ["get", "attach"], "path": "attachment.control.state", "values": ["blocked"], "next": ["capture", "get"], "guidance": "观察附着存在，但当前控制申请条件未满足；按 control.reason 处理：remote_viewer 需用户在界面结束远程观看，desktop_not_ready 等待执行端恢复，cleanup_pending 等待清理，cleanup_uncertain 需报告清理未确认，grant_needs_verification 核验授权变化且不自动夺回人工收回的控制。takeover 不能解决这些状态；条件变化后再查询，可继续获准的只读观察。"},
+        {"tools": ["get", "attach"], "path": "attachment.control.state", "values": ["takeover_required"], "next": ["capture", "termous.desktops.control.acquire"], "guidance": "当前没有本附着可用的控制权，普通申请会因控制入口占用或 VNC 入口切换而失败。若用户已明确授权接管这一目标，首次即可用 takeover=true 发起现有审批，无需先试 false；授权尚不明确时先说明接管影响并澄清，不能把需要输入等同于允许抢占。无需重复 get 已知且未变化的状态。"},
         {"tools": ["get", "attach"], "path": "attachment.grant.id", "exists": true, "next": ["termous.desktops.keyboard.shortcut", "termous.desktops.keyboard.key", "termous.desktops.keyboard.text", "termous.desktops.pointer.click", "termous.desktops.pointer.scroll", "capture"], "guidance": "本轮附着回执已包含控制授权；控制权只是输入前置条件。若目标需要操作应用，使用现有 grant 选择键盘或鼠标工具，无需重复申请或先释放。准确动作尚未加载时调用 discover_tools。"},
-        {"tools": ["get", "attach"], "path": "attachment.state", "values": ["ready"], "next": ["capture", "termous.desktops.control.acquire"], "guidance": "观察附着已就绪，使用返回的 attachment.id 截图；当前没有确认可用的 grant，尚不能输入。先处理最近的审批或占用错误，仅在目标确需输入且条件允许时申请控制权。get 只查询，不会解除占用；release 只归还控制权。"},
+        {"tools": ["get", "attach"], "path": "attachment.control.state", "values": ["held"], "next": ["get"], "guidance": "控制快照显示已持有，但当前回执中的 grant 缺失、过期或无法确认；先查询同一附着重新核验，不使用旧授权输入，也不直接再次申请。若核验后仍不一致，说明阻碍，避免反复查询。"},
+        {"tools": ["get", "attach"], "path": "attachment.control.state", "values": ["available"], "next": ["capture", "termous.desktops.control.acquire"], "guidance": "本次查询未发现有效控制占用；若目标确需输入，可用 takeover=false 或省略该字段申请一次。已有明确且有效的查询无需重复读取。此状态是瞬时观察，不是授权或成功保证；仍以审批结果和返回的有效 grant 为准。"},
+        {"tools": ["get", "attach"], "path": "attachment.state", "values": ["ready"], "next": ["capture", "termous.desktops.control.acquire"], "guidance": "观察附着已就绪，可用 attachment.id 截图；没有确认可用的 grant，尚不能输入。首次申请前用 get(attachment_id) 查看 control；旧 Core 缺少该字段表示占用未知，不能推断无人占用，也不要循环查询缺失字段。先处理最近的审批或占用错误，再根据任务与接管授权选择参数；release 只归还控制权。"},
         {"tools": ["get", "attach"], "path": "attachment", "exists": true, "next": ["get"], "guidance": "The observation attachment is not yet confirmed ready. Wait with get(attachment_id, wait_ms); do not fabricate grant_id."}
       ]
     },
@@ -371,8 +375,8 @@
       "operations": {"control.acquire": ["acquire"], "pointer.move": ["move"], "pointer.click": ["click"], "pointer.scroll": ["scroll"], "pointer.drag": ["drag"], "keyboard.key": ["key"], "keyboard.shortcut": ["shortcut"], "keyboard.text": ["text"], "clipboard.set_text": ["text"], "resize": ["resize"], "operations.get": ["read"], "control.release": ["release"]},
       "evidence": {"states": ["operation.state", "control.attachment.state"], "approvals": ["control.approval", "approval"]},
       "steps": [
-        {"tools": ["control.acquire"], "role": "submit", "next": ["get"], "cleanup": ["control.release", "operations.get"], "guidance": "申请回执不等于已取得控制权；核对 control.approval 与 control.attachment.grant。有效 grant 是键鼠输入的前置条件，不能用反复 acquire 或 release 代替操作应用。仅当确需改用工作流时先归还直接输入授权。"},
-        {"tools": ["pointer.move", "pointer.click", "pointer.scroll", "pointer.drag", "keyboard.key", "keyboard.shortcut", "keyboard.text", "clipboard.set_text", "resize"], "role": "input", "next": ["operations.get", "capture"], "cleanup": ["control.release", "operations.get"]},
+        {"tools": ["control.acquire"], "role": "submit", "preparation": "先读当前附着 get(attachment_id) 的 grant 和 control，已有本轮有效查询就复用。held 复用 grant；available 普通申请；takeover_required 且用户已授权接管时首次即用 takeover=true，无需先失败一次；blocked 按 reason 处理。无 grant 不表示空闲，ready 只保证观察。接管会影响其他入口，任务需要输入本身不等于接管授权；不明确时澄清一次。状态缺失视为未知，不猜测或循环查询。", "next": ["get"], "cleanup": ["control.release", "operations.get"], "guidance": "申请回执不等于已取得控制权；核对 control.approval 与 control.attachment.grant。有效 grant 是键鼠输入的前置条件，不能用反复 acquire 或 release 代替操作应用。仅当确需改用工作流时先归还直接输入授权。"},
+        {"tools": ["pointer.move", "pointer.click", "pointer.scroll", "pointer.drag", "keyboard.key", "keyboard.shortcut", "keyboard.text", "clipboard.set_text", "resize"], "role": "input", "preparation": "使用当前附着的有效 grant_id；鼠标输入还需该附着最近截图的 screenshot_id 与实际图片坐标，不能用 workflow snapshot_id。核对具体工具参数和键码；一次新动作使用一个请求 ID，结果不确定时查询原操作并观察，不重放。", "next": ["operations.get", "capture"], "cleanup": ["control.release", "operations.get"]},
         {"tools": ["operations.get"], "role": "poll", "next": ["capture"]},
         {"tools": ["control.release"], "role": "close", "next": [], "guidance": "本次只归还控制权，释放完成不要求再次申请。若后续目标确实需要新的输入，先核验状态，再通过 discover_tools 查找对应操作；不要反复归还或自动接管人工收回的控制权。", "completion": {"fields": ["attachment_id", "grant_id"], "flag": "completed", "next": "control.acquire"}}
       ],
