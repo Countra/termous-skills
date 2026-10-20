@@ -11,7 +11,7 @@ import stat
 import sys
 from xml.parsers.expat import ExpatError
 
-APP_ID = "dev.termous.app"
+APP_ID = "com.termous.app"
 
 
 def regular_file(path):
@@ -104,7 +104,7 @@ def linux_installation(executable, source):
         return None
     appimage = header[8:11] in (b"AI\x01", b"AI\x02")
     if appimage:
-        if not executable.name.lower().startswith("termous"):
+        if not re.fullmatch(r"Termous(?:-\d+\.\d+\.\d+(?:[-.][0-9A-Za-z.-]+)?)?\.AppImage", executable.name, re.IGNORECASE):
             return None
     elif executable.name not in ("Termous", "termous"):
         return None
@@ -119,7 +119,7 @@ def linux_desktop_entries():
     roots.extend(Path(value) for value in data_dirs.split(":")
                  if Path(value).is_absolute())
     for root in dict.fromkeys(roots):
-        for name in ("termous.desktop", "Termous.desktop", "dev.termous.app.desktop"):
+        for name in ("com.termous.app.desktop", "termous.desktop", "Termous.desktop"):
             yield root / "applications" / name
 
 

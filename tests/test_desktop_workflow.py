@@ -53,7 +53,7 @@ class DiscoveryTests(unittest.TestCase):
             "XDG_DATA_HOME": "/home/fixture/.local/share", "XDG_DATA_DIRS": "",
         }):
             entries = list(discovery.linux_desktop_entries())
-        self.assertEqual(entries[0], PurePosixPath("/home/fixture/.local/share/applications/termous.desktop"))
+        self.assertEqual(entries[0], PurePosixPath("/home/fixture/.local/share/applications/com.termous.app.desktop"))
         self.assertIn(PurePosixPath("/usr/local/share/applications/termous.desktop"), entries)
         self.assertIn(PurePosixPath("/usr/share/applications/termous.desktop"), entries)
 
@@ -97,7 +97,7 @@ class DiscoveryTests(unittest.TestCase):
                 self.assertEqual(result["version"], "1.2.3")
                 self.assertEqual(result["launch_path"], str(bundle.resolve()))
                 self.assertEqual(result["install_location"], str(bundle.resolve()))
-                for key, value in (("CFBundleIdentifier", "other"), ("CFBundleExecutable", "../Other")):
+                for key, value in (("CFBundleIdentifier", "other"), ("CFBundleIdentifier", "com.termous.app.development"), ("CFBundleExecutable", "../Other")):
                     info.write_bytes(plistlib.dumps({**data, key: value}))
                     self.assertIsNone(discovery.mac_installation(bundle, "explicit"))
                 info.write_bytes(b"<?xml version='1.0'?><plist><dict>")
@@ -115,6 +115,14 @@ class DiscoveryTests(unittest.TestCase):
                 self.assertIsNone(discovery.linux_installation(executable, "explicit"))
             executable.write_text("not an executable")
             self.assertIsNone(discovery.linux_installation(executable, "explicit"))
+
+    def test_linux_development_shell_is_never_a_production_installation(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            for name in ("Termous Dev", "Termous-Dev.AppImage", "termous-development.AppImage"):
+                executable = Path(temporary) / name
+                executable.write_bytes(b"\x7fELF\x02\x01\x01\x00AI\x02\x00")
+                with patch.object(discovery.os, "access", return_value=True):
+                    self.assertIsNone(discovery.linux_installation(executable, "explicit"))
 
     def test_linux_desktop_entry_accepts_only_direct_launch(self):
         with tempfile.TemporaryDirectory() as temporary:

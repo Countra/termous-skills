@@ -3,6 +3,7 @@
 import ctypes
 import errno
 import os
+import re
 from pathlib import Path
 import sys
 
@@ -122,7 +123,7 @@ def linux_processes(root=Path("/proc")):
             if entry.stat().st_uid != os.getuid():
                 continue
             name = (entry / "comm").read_text().strip().lower()
-            if name != "termous" and not (name.startswith(("termous-", "termous.")) and name != "termous-core"):
+            if name not in ("termous", "termous.appimage") and not re.match(r"^termous-\d+\.", name):
                 continue
             executable = os.readlink(entry / "exe")
             if executable.endswith(" (deleted)"):

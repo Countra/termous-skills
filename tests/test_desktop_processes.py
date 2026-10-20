@@ -17,7 +17,7 @@ class ProcessTests(unittest.TestCase):
     def test_windows_filters_sessions_matches_paths_and_closes_handles(self):
         api = Mock()
         api.CreateToolhelp32Snapshot.return_value = 100
-        candidates = iter([(11, "Termous.exe"), (22, "Termous.exe"), (33, "unrelated.exe")])
+        candidates = iter([(11, "Termous.exe"), (22, "Termous.exe"), (33, "unrelated.exe"), (44, "Termous Dev.exe")])
 
         def next_entry(handle, pointer):
             candidate = next(candidates, None)
@@ -76,7 +76,7 @@ class ProcessTests(unittest.TestCase):
             return 8
 
         def name(pid, buffer, size):
-            buffer.value = b"Termous" if pid == 11 else b"other"
+            buffer.value = b"Termous" if pid == 11 else b"Termous Dev"
             return len(buffer.value)
 
         def path(pid, buffer, size):
@@ -95,7 +95,7 @@ class ProcessTests(unittest.TestCase):
     def test_linux_filters_core_and_reports_denied_or_deleted_images(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
-            for pid, name in ((11, "Termous"), (22, "termous-core"), (33, "Termous.AppImage")):
+            for pid, name in ((11, "Termous"), (22, "termous-core"), (33, "Termous.AppImage"), (44, "Termous Dev"), (55, "termous-development")):
                 folder = root / str(pid)
                 folder.mkdir()
                 (folder / "comm").write_text(name)
