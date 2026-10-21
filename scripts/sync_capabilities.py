@@ -52,12 +52,14 @@ def validate_catalog(root=ROOT):
                 raise ValueError("能力阶段不合法")
             if "preparation" in step and (not isinstance(step["preparation"], str) or not step["preparation"].strip() or len(step["preparation"]) > 1200):
                 raise ValueError("调用前说明必须为非空且不超过 1200 字符的文本")
+            if "recovery" in step and (not isinstance(step["recovery"], list) or any(not isinstance(name, str) or not name for name in step["recovery"])):
+                raise ValueError("阶段恢复入口必须为工具名称列表")
             for short_name in step["tools"]:
                 name = full_name(capability, short_name)
                 if name in names:
                     raise ValueError(f"工具有多个职责定义: {name}")
                 names.add(name)
-            references.extend(full_name(capability, name) for name in step.get("next", []) + step.get("cleanup", []))
+            references.extend(full_name(capability, name) for name in step.get("next", []) + step.get("cleanup", []) + step.get("recovery", []))
             if "completion" in step:
                 references.append(full_name(capability, step["completion"]["next"]))
             if "progresses" in step:

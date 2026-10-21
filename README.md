@@ -110,7 +110,7 @@ Without adjacent application repositories, use `python -B scripts/validate_skill
 ## Maintaining the bundle
 
 1. Identify the owning skill and confirm the current Core tool contract before changing guidance.
-2. Update its entry instructions and relevant references together, keeping examples free of real hosts, credentials, and user content.
+2. Update its entry instructions and relevant references together. Write all skill instructions and reference documentation in clear, accurate English without mixing languages, and keep examples free of real hosts, credentials, and user content.
 3. Add or adjust routing cases when the intended task coverage changes, including ambiguous and negative examples.
 4. Run validation and the repository tests, then build the skills bundle from `web` to check desktop integration.
 

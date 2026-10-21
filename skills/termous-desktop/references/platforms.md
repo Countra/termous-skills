@@ -39,4 +39,4 @@ Results include `schema_version`, `platform`, `action`, `ok`, and `installation`
 
 Exit status is 0 when inspection completed, even when metadata is missing or a launch remains unconfirmed without an OS error. Operational errors return 1 with `ok: false` and an error code/message; invalid CLI arguments return 2 with argparse usage. Keep the structured state when reporting results. No operation configures MCP, changes startup-at-login behavior, closes an application, or grants remote permissions.
 
-仅识别正式版 `com.termous.app`。源码开发壳 `Termous Dev` 使用独立入口与进程名，不参与正式版发现或启动冲突判断；旧安装请通过新版安装包完成身份迁移。
+Only the production application, `com.termous.app`, is recognized. The source development shell, `Termous Dev`, uses separate launch entries and process names; it is excluded from production application discovery and launch-conflict detection. Use an updated installer to migrate the application identity of an older installation.

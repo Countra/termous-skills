@@ -38,7 +38,7 @@ class CapabilityTests(unittest.TestCase):
                 path = root / "skills" / uri.removeprefix("skill://")
                 path.parent.mkdir(parents=True, exist_ok=True)
                 path.write_text("流程说明", encoding="utf-8")
-            for change in ("missing", "duplicate", "reference", "resource", "operation_missing", "operation_unknown", "settled_without_states", "settled_invalid", "approval_path", "approval_type", "recovery_error", "recovery_target", "unreachable_target", "empty_error", "entry_overflow", "progress_path", "progress_collection", "progress_target", "preparation_type", "preparation_empty", "preparation_length"):
+            for change in ("missing", "duplicate", "reference", "resource", "operation_missing", "operation_unknown", "settled_without_states", "settled_invalid", "approval_path", "approval_type", "recovery_error", "recovery_target", "unreachable_target", "empty_error", "entry_overflow", "progress_path", "progress_collection", "progress_target", "preparation_type", "preparation_empty", "preparation_length", "step_recovery_type", "step_recovery_reference", "step_recovery_name"):
                 catalog = json.loads(json.dumps(source))
                 family = catalog["capabilities"][0]
                 if change == "missing":
@@ -70,6 +70,8 @@ class CapabilityTests(unittest.TestCase):
                     catalog["skillEntries"][next(iter(catalog["skillEntries"]))] = ["termous.hosts.list"] * 9
                 elif change.startswith("preparation_"):
                     family["steps"][0]["preparation"] = {"preparation_type": [], "preparation_empty": " ", "preparation_length": "前" * 1201}[change]
+                elif change.startswith("step_recovery_"):
+                    family["steps"][0]["recovery"] = {"step_recovery_type": "get", "step_recovery_reference": ["invented"], "step_recovery_name": [None]}[change]
                 elif change.startswith("progress_"):
                     family["steps"][0]["progresses"] = {"tools": ["access_profiles.list"], "path": "catalog.id"}
                     progresses = family["steps"][0]["progresses"]
